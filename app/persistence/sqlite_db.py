@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from typing import List, Optional
+from typing import List, Optional, Any
 from ..models.entities import Project, Session
 
 class SQLiteDB:
@@ -49,6 +49,20 @@ class SQLiteDB:
                     FOREIGN KEY (project_id) REFERENCES projects (project_id)
                 )
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS issues (
+                    issue_id TEXT PRIMARY KEY,
+                    session_id TEXT,
+                    title TEXT,
+                    description TEXT,
+                    start_time TEXT,
+                    end_time TEXT,
+                    status TEXT,
+                    created_at TEXT,
+                    updated_at TEXT,
+                    FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+                )
+            """)
             conn.commit()
 
     def save_project(self, project: Project):
@@ -83,11 +97,57 @@ class SQLiteDB:
             ))
             conn.commit()
 
+    def get_session(self, session_id: str) -> Optional[Session]:
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM sessions WHERE session_id = ?", (session_id,))
+            row = cursor.fetchone()
+            return Session(**dict(row)) if row else None
+
     def get_sessions_by_project(self, project_id: str) -> List[Session]:
         with self._get_connection() as conn:
-            cursor = conn.execute("SELECT * FROM sessions WHERE project_id = ?", (project_id,))
+            cursor = conn.execute("SELECT * FROM sessions WHERE project_id = ? ORDER BY created_at DESC", (project_id,))
             rows = cursor.fetchall()
             return [Session(**dict(row)) for row in rows]
+
+    def save_issue(self, issue: Any):
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO issues 
+                (issue_id, session_id, title, description, start_time, end_time, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                issue.issue_id, issue.session_id, issue.title, issue.description,
+                issue.start_time, issue.end_time, issue.status, issue.created_at, issue.updated_at
+            ))
+            conn.commit()
+
+    def get_issues_by_session(self, session_id: str) -> List[Any]:
+        from ..models.entities import Issue
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM issues WHERE session_id = ? ORDER BY created_at ASC", (session_id,))
+            rows = cursor.fetchall()
+            return [Issue(**dict(row)) for row in rows]
+
+    def delete_issue(self, issue_id: str):
+        with self._get_connection() as conn:
+            conn.execute("DELETE FROM issues WHERE issue_id = ?", (issue_id,))
+            conn.commit()
+
+    def get_last_revision_number(self, project_id: str) -> int:
+        """Finds the highest rev-XXXXXX number in the project's sessions."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT title FROM sessions WHERE project_id = ?", (project_id,))
+            titles = [row['title'] for row in cursor.fetchall()]
+            
+            max_rev = 0
+            import re
+            for title in titles:
+                match = re.search(r'rev-(\d+)', title)
+                if match:
+                    rev_num = int(match.group(1))
+                    if rev_num > max_rev:
+                        max_rev = rev_num
+            return max_rev
 
     def close(self):
         # In this implementation, we open/close on every call, 

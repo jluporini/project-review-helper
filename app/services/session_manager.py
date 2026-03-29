@@ -5,7 +5,7 @@ from datetime import datetime
 from slugify import slugify
 from typing import Optional, Dict, Any
 
-from ..models.entities import Project, Session, SessionEvent, Screenshot, QuickNote, AudioRecording
+from ..models.entities import Project, Session, SessionEvent, Screenshot, QuickNote, AudioRecording, Issue
 from .audio_recorder import AudioRecorder
 from .screenshot_service import ScreenshotService
 from ..persistence.file_system import FileSystemPersistence
@@ -19,6 +19,7 @@ class SessionManager:
         self.screenshot_service = ScreenshotService()
         
         self.active_session: Optional[Session] = None
+        self.active_issue: Optional[Issue] = None
         self.session_start_time_unix: float = 0
         self.event_sequence: int = 0
         self.logger = logging.getLogger(__name__)
@@ -44,6 +45,12 @@ class SessionManager:
         )
         self.fs.save_event(self.active_session.storage_path, event)
         return event
+
+    def get_next_revision_title(self, project: Project) -> str:
+        """Returns the next suggested revision title with padding (e.g., rev-000001)."""
+        last_rev = self.db.get_last_revision_number(project.project_id)
+        next_rev = last_rev + 1
+        return f"rev-{next_rev:06d}"
 
     def start_session(self, project: Project, title: str, tester: str):
         """Initializes and starts a new session."""
@@ -76,29 +83,110 @@ class SessionManager:
             "project_code": project.code
         })
         
-        # Start Audio
-        audio_path = os.path.join(storage_path, "raw", "audio", "session_audio.wav")
-        self.audio_recorder.start_recording(audio_path)
-        self._log_event("audio_started", {"file": "raw/audio/session_audio.wav"})
-        
         return session
 
-    def take_manual_screenshot(self):
-        """Takes a manual screenshot and logs it."""
+    def resume_session(self, session_id: str):
+        """Resumes an existing session."""
+        session = self.db.get_session(session_id)
+        if not session:
+            raise ValueError("Session not found")
+        
+        self.active_session = session
+        # We approximate session start time to now for new events' relative timestamps, 
+        # but in a real scenario we might want to store the original start and calculate offset.
+        # For simplicity, we restart the relative clock.
+        self.session_start_time_unix = time.time()
+        
+        # Count existing events to continue sequence
+        # (This would require reading events.ndjson, for now we just restart sequence)
+        self.event_sequence = 0
+        
+        self._log_event("session_resumed")
+        return session
+
+    def start_issue(self, title: str):
+        """Starts a new issue within the active session."""
+        if not self.active_session:
+            return
+            
+        issue = Issue(
+            session_id=self.active_session.session_id,
+            title=title,
+            start_time=datetime.now().isoformat(),
+            status="active"
+        )
+        self.db.save_issue(issue)
+        self.active_issue = issue
+        
+        self._log_event("issue_started", {
+            "issue_id": issue.issue_id,
+            "title": title
+        })
+        return issue
+
+    def stop_issue(self):
+        """Stops the current active issue."""
+        if not self.active_issue:
+            return
+            
+        self.active_issue.end_time = datetime.now().isoformat()
+        self.active_issue.status = "finished"
+        self.db.save_issue(self.active_issue)
+        
+        self._log_event("issue_stopped", {
+            "issue_id": self.active_issue.issue_id,
+            "title": self.active_issue.title
+        })
+        
+        issue = self.active_issue
+        self.active_issue = None
+        return issue
+
+    def toggle_audio_recording(self) -> bool:
+        """Toggles audio recording. Returns True if now recording, False otherwise."""
+        if not self.active_session:
+            return False
+            
+        if self.audio_recorder.is_recording:
+            duration_s = self.audio_recorder.stop_recording()
+            self._log_event("audio_stopped", {"duration_s": duration_s})
+            return False
+        else:
+            # Generate a unique filename for this segment
+            timestamp = datetime.now().strftime("%H%M%S")
+            issue_tag = f"_issue_{self.active_issue.issue_id[:8]}" if self.active_issue else ""
+            filename = f"audio_{timestamp}{issue_tag}.wav"
+            audio_path = os.path.join(self.active_session.storage_path, "raw", "audio", filename)
+            
+            self.audio_recorder.start_recording(audio_path)
+            self._log_event("audio_started", {
+                "file": f"raw/audio/{filename}",
+                "issue_id": self.active_issue.issue_id if self.active_issue else None
+            })
+            return True
+
+    def take_manual_screenshot(self, monitor_index: int = 1):
+        """Takes a manual screenshot of a specific monitor and logs it."""
         if not self.active_session:
             return
             
         timestamp_ms = self._get_timestamp_ms()
-        seq = sum(1 for f in os.listdir(os.path.join(self.active_session.storage_path, "raw", "screenshots")) if f.endswith(".png")) + 1
-        filename = f"{seq:04d}.png"
+        # Count existing screenshots to get next sequence
+        screenshots_dir = os.path.join(self.active_session.storage_path, "raw", "screenshots")
+        seq = sum(1 for f in os.listdir(screenshots_dir) if f.endswith(".png")) + 1
+        
+        issue_tag = f"_{self.active_issue.title[:10]}" if self.active_issue else ""
+        filename = f"{seq:04d}{slugify(issue_tag)}.png"
         rel_path = f"raw/screenshots/{filename}"
         abs_path = os.path.join(self.active_session.storage_path, rel_path)
         
-        self.screenshot_service.take_screenshot(abs_path, filename)
+        self.screenshot_service.take_screenshot(abs_path, filename, monitor_index)
         
         event = self._log_event("screenshot_taken", {
             "file": rel_path,
-            "timestamp_ms": timestamp_ms
+            "timestamp_ms": timestamp_ms,
+            "monitor_index": monitor_index,
+            "issue_id": self.active_issue.issue_id if self.active_issue else None
         })
         
         screenshot = Screenshot(
@@ -118,7 +206,8 @@ class SessionManager:
         timestamp_ms = self._get_timestamp_ms()
         event = self._log_event("quick_note_added", {
             "text": text,
-            "timestamp_ms": timestamp_ms
+            "timestamp_ms": timestamp_ms,
+            "issue_id": self.active_issue.issue_id if self.active_issue else None
         })
         
         note = QuickNote(
@@ -131,13 +220,19 @@ class SessionManager:
         return note
 
     def stop_session(self):
-        """Finalizes the session, stops audio, and generates manifests."""
+        """Finalizes the session, stops audio if recording, and generates manifests."""
         if not self.active_session:
             return
             
-        # Stop Audio
-        duration_s = self.audio_recorder.stop_recording()
-        self._log_event("audio_stopped", {"duration_s": duration_s})
+        # Stop Issue if active
+        if self.active_issue:
+            self.stop_issue()
+
+        # Stop Audio if active
+        duration_s = 0
+        if self.audio_recorder.is_recording:
+            duration_s = self.audio_recorder.stop_recording()
+            self._log_event("audio_stopped", {"duration_s": duration_s})
         
         # Update Session
         self.active_session.end_time = datetime.now().isoformat()
@@ -180,11 +275,11 @@ class SessionManager:
         
         # Handoff Manifest for LLM
         handoff_manifest = {
-            "audio_file": "raw/audio/session_audio.wav",
+            "audio_dir": "raw/audio",
             "events_file": "events.ndjson",
             "screenshots_dir": "raw/screenshots",
             "notes_file": "raw/notes/quick_notes.ndjson",
-            "segmentation_anchors": "Check events.ndjson for screenshot_taken and quick_note_added"
+            "segmentation_anchors": "Check events.ndjson for screenshot_taken, quick_note_added, audio_started, and issue_started"
         }
         self.fs.save_manifest(storage_path, "llm_handoff_manifest", handoff_manifest)
         

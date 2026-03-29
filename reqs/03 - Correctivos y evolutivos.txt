@@ -16,10 +16,12 @@ d-----         28-mar-26   1:24 AM                2026-03-28_012406_rev-3
 
 #003 - Además de poder elegir el monitor, sería bueno tener un pequeño thumbnail, que muestre en vivo cual es el monitor seleccionado, para que el operador tenga una indicación visual de lo que estaría capturando.
 
-#004 - Sería deseable que hubiera un nivel de "Issue" dentro de sesión. De ese modo el usuario podría dar hints muy claros dentro de la sesión, para el software que procese luego, de cuando termina un tema y empieza el otro. Esto debe ser claramente correspondido con la estructura de datos que se genere.
+#004 - Sería deseable que hubiera un nivel de "Issue" dentro de sesión. De ese modo el usuario podría dar hints muy claros dentro de la sesión, para el software que procese luego, de cuando termina un tema y empieza el otro. Esto debe ser claramente correspondido con la estructura de datos que se genere. No necesariamente esto debe corresponderse con archivos distintos (tampoco sería un problema si así fuera). Pueden ser cortes dentro de cada archivo.
 
 #005 - Se debería poder inicial y detener la grabación de audio. Incluso varias veces por issue.
 
 #006 - Debería haber una indicación muy clara sobre si la captura de audio está operando o no.
 
 #007 - Se debería poder continuar un issue o sesión previa. Esto implica que debe haber indicaciónes visuales claras de sobre que sesion y issue se está trabajando. Del mismo modo, se deberían poder borrar issues existentes.
+
+#008 - Al seleccionar un proyecto, permite continuar una sessión previa. Si el usuario opta por cargar una nueva sesión, propone un nombre para la misma (con un font más tenue), de modo que el usuario pueda tomar lo propuesto o ingresar el nombre deseado. Mi propuesta que que las sesiones empiecen con un prefijo asigando por el sistema (cómo estás haciendo ahora), y a lo sumo el usuario pueda agregar un trailer que le resulte descriptivo.

@@ -78,12 +78,28 @@ class QuickNote:
 class AudioRecording:
     audio_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     session_id: str = ""
+    issue_id: Optional[str] = None
     file_path: str = ""
     format: str = "wav"
     sample_rate: int = 44100
     channels: int = 1
     duration_ms: int = 0
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+
+    def to_dict(self):
+        return asdict(self)
+
+@dataclass
+class Issue:
+    issue_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str = ""
+    title: str = ""
+    description: str = ""
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    status: str = "created"  # created, active, finished, error
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
     def to_dict(self):
         return asdict(self)
