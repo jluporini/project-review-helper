@@ -1,0 +1,116 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Extensiones compiladas
+*.so
+*.pyd
+*.dll
+
+# Distribución / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# =========================
+# Virtual environments
+# =========================
+venv/
+.venv/
+env/
+ENV/
+
+# =========================
+# Entornos y secretos
+# =========================
+.env
+.env.*
+*.env
+.python-version
+
+# =========================
+# Logs y temporales
+# =========================
+*.log
+*.tmp
+*.temp
+*.bak
+
+# =========================
+# Testing / coverage
+# =========================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache/
+
+# =========================
+# Type checkers / linters
+# =========================
+.mypy_cache/
+.pyre/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# IDEs / editores
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Sistema operativo
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Qt / PySide posibles artefactos
+# =========================
+*.qrc
+*_rc.py
+ui_*.py
+
+# =========================
+# Archivos locales de ejecución/datos
+# Ajustá según tu proyecto
+# =========================
+*.sqlite3
+*.db
+
+# =========================
+# Si generás outputs locales
+# descomentá si aplica
+# =========================
+# output/
+# outputs/
+# data/
+# screenshots/
+# recordings/

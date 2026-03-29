@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      - ~/.review_capture:/root/.review_capture
+    environment:
+      - QT_QPA_PLATFORM=offscreen # Para correr sin monitor (tests)
+    command: python tests/test_session.py

@@ -1,0 +1,7 @@
+PySide6
+mss
+sounddevice
+soundfile
+numpy
+python-slugify
+pyyaml

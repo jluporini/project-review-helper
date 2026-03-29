@@ -1,0 +1,583 @@
+11. Requisitos de nombres de archivos y carpetas
+11.1. Carpeta de sesión
+
+Debe construirse a partir de:
+
+fecha/hora de inicio;
+identificador amigable o slug del título;
+opcionalmente ticket o branch.
+
+Ejemplo:
+
+2026-03-27_193500_fix-login
+2026-03-27_193500_JIRA-182_fix-login
+11.2. Screenshots
+
+Los nombres deben ser estables y ordenables alfabéticamente.
+
+Formato sugerido:
+
+0001.png
+0002.png
+0003.png
+
+Opcional:
+
+0001_login_screen.png
+0002_error_modal.png
+11.3. Archivos de eventos
+
+Se recomienda NDJSON para eventos secuenciales.
+Cada línea representa un evento independiente.
+
+12. Pantallas / vistas de la aplicación
+12.1. Pantalla principal
+
+Debe permitir:
+
+crear proyecto;
+seleccionar proyecto existente;
+listar sesiones recientes;
+crear nueva sesión;
+continuar sesión previa;
+abrir carpeta del proyecto;
+abrir carpeta de la sesión seleccionada.
+12.2. Pantalla de administración de proyecto
+
+Debe permitir:
+
+editar nombre;
+editar descripción;
+seleccionar ruta raíz de almacenamiento;
+indicar ruta de repo asociada;
+configurar patrón de carpeta de sesión;
+definir defaults de sesión.
+12.3. Pantalla de creación de sesión
+
+Debe solicitar:
+
+proyecto;
+título de la sesión;
+tipo de revisión;
+ticket relacionado (opcional);
+branch (opcional);
+entorno (opcional);
+objetivo o descripción de la sesión;
+nombre del tester;
+sistema objetivo (texto libre).
+12.4. Pantalla de sesión activa
+
+Debe ser la pantalla operativa principal.
+
+Debe incluir:
+
+identificador visible de la sesión;
+proyecto;
+hora de inicio;
+cronómetro;
+estado de grabación de audio;
+botón iniciar / pausar / finalizar;
+botón tomar screenshot;
+campo de texto rápido;
+botón agregar nota;
+lista o feed temporal de eventos recientes;
+indicador de ruta de almacenamiento;
+acceso a abrir carpeta local;
+alertas de error.
+12.5. Pantalla de detalle de sesión
+
+Debe permitir visualizar:
+
+metadatos;
+lista de eventos;
+lista de screenshots;
+lista de notas;
+ubicación de archivos;
+estado de integridad de la sesión.
+13. Flujo principal de uso
+13.1. Alta de proyecto
+El usuario crea o selecciona un proyecto.
+Define la ruta raíz de almacenamiento.
+Guarda la configuración.
+13.2. Creación de sesión
+El usuario crea una nueva sesión.
+Completa metadatos básicos.
+Presiona “Comenzar sesión”.
+13.3. Inicio de captura
+
+Al comenzar la sesión, el sistema:
+
+registra el timestamp de inicio;
+crea la carpeta de sesión;
+crea estructura raw/derived/logs;
+crea manifiestos iniciales;
+inicia grabación de audio;
+registra evento session_started;
+registra evento audio_started.
+13.4. Durante la sesión
+
+El usuario puede:
+
+hablar libremente;
+tomar screenshots;
+ingresar notas rápidas;
+eventualmente pausar o reanudar.
+
+Cada acción debe registrar un evento.
+
+13.5. Fin de sesión
+
+Al finalizar:
+
+se detiene la grabación de audio;
+se registra audio_stopped;
+se registra session_finished;
+se actualizan metadatos finales;
+se valida que existan los archivos esperados;
+se deja la sesión cerrada y consistente.
+14. Requisitos de captura de audio
+14.1. Inicio automático
+
+Al iniciar la sesión, la grabación de audio debe comenzar automáticamente, salvo configuración explícita contraria.
+
+14.2. Archivo de audio principal
+
+Debe generarse un archivo principal continuo por sesión.
+
+14.3. Formato
+
+El formato podrá ser configurable, pero debe elegirse uno razonable para:
+
+grabación estable;
+compatibilidad posterior;
+consumo por LLM o herramientas de transcripción.
+
+Formatos razonables:
+
+WAV si se prioriza simplicidad/calidad;
+WEBM/OGG si se prioriza tamaño.
+14.4. Metadatos mínimos
+
+Debe registrarse:
+
+formato;
+sample rate;
+canales;
+duración;
+ruta del archivo.
+14.5. Timestamps de referencia
+
+Debe quedar claro el instante exacto de inicio de la grabación respecto del inicio de sesión.
+
+15. Requisitos de captura de screenshots
+15.1. Captura manual
+
+La captura debe iniciarse por acción explícita del usuario.
+
+15.2. Modos posibles
+
+Se recomienda permitir al menos uno de estos modos:
+
+pantalla principal;
+monitor seleccionado;
+región seleccionable.
+
+Idealmente, una configuración por proyecto o por sesión podría indicar el modo preferido.
+
+15.3. Registro temporal
+
+Cada screenshot debe registrar:
+
+timestamp absoluto;
+milliseconds desde el inicio de la sesión;
+sequence_number.
+15.4. Persistencia inmediata
+
+Luego de tomada la captura, debe guardarse inmediatamente en disco.
+
+15.5. Tolerancia a falla
+
+Si una captura falla:
+
+no debe abortarse la sesión;
+debe registrarse evento error;
+debe notificarse visualmente al usuario.
+16. Requisitos de notas rápidas
+16.1. Objetivo
+
+Permitir ingresar texto corto o mediano durante la sesión como complemento o sustituto parcial del dictado.
+
+16.2. UX
+
+Debe existir un campo de ingreso visible y rápido.
+Debe ser posible:
+
+escribir texto;
+pegar texto;
+confirmar con botón;
+opcionalmente confirmar con atajo.
+16.3. Contenido esperado
+
+Las notas pueden incluir:
+
+URL;
+token;
+texto copiado de una pantalla;
+comentario técnico;
+nombre de usuario;
+contexto del caso de prueba;
+observación funcional.
+16.4. Persistencia
+
+Cada nota debe:
+
+quedar guardada en filesystem;
+registrarse como evento;
+quedar incluida luego en el manifiesto temporal.
+17. Modelo de eventos
+
+Se recomienda usar events.ndjson como fuente primaria de trazabilidad.
+
+Ejemplo de eventos:
+
+{"sequence_number":1,"event_type":"session_started","timestamp_absolute":"2026-03-27T19:35:00-03:00","timestamp_ms_from_session_start":0,"payload":{"tester":"Juan Pablo","title":"Fix login"}}
+{"sequence_number":2,"event_type":"audio_started","timestamp_absolute":"2026-03-27T19:35:00-03:00","timestamp_ms_from_session_start":25,"payload":{"file":"raw/audio/session_audio.webm"}}
+{"sequence_number":3,"event_type":"screenshot_taken","timestamp_absolute":"2026-03-27T19:35:41-03:00","timestamp_ms_from_session_start":41200,"payload":{"file":"raw/screenshots/0001.png"}}
+{"sequence_number":4,"event_type":"quick_note_added","timestamp_absolute":"2026-03-27T19:35:42-03:00","timestamp_ms_from_session_start":42850,"payload":{"text":"Error visible en modal"}}
+{"sequence_number":5,"event_type":"session_finished","timestamp_absolute":"2026-03-27T20:02:10-03:00","timestamp_ms_from_session_start":1630000,"payload":{}}
+18. Archivos de metadatos a generar
+18.1. session_metadata.json
+
+Debe contener la metadata general de la sesión.
+
+18.2. session_manifest.json
+
+Debe contener:
+
+rutas relevantes;
+cantidades;
+resumen estructural;
+versión de formato;
+checks básicos.
+18.3. llm_handoff_manifest.json
+
+Debe contener información útil para un procesamiento posterior por LLM.
+
+Ejemplo:
+
+dónde está el audio;
+dónde están las imágenes;
+qué eventos deben usarse como anclas;
+qué archivos derivados se espera generar;
+reglas sugeridas para segmentar.
+19. Requisito clave: preparación para segmentación posterior del audio
+
+El diseño debe contemplar expresamente que los eventos de screenshot y las notas rápidas podrán utilizarse como anclas para segmentar el audio durante el procesamiento posterior.
+
+19.1. Objetivo
+
+Facilitar que un proceso posterior:
+
+identifique momentos relevantes;
+corte o semi-corte el audio en bloques lógicos;
+asocie las transcripciones resultantes con screenshots y notas.
+19.2. Estrategia esperada
+
+La app de captura no necesariamente debe cortar físicamente el audio en el MVP.
+Pero sí debe dejar toda la información necesaria para que otro proceso pueda hacerlo.
+
+19.3. Datos necesarios
+
+Para cada screenshot:
+
+timestamp_ms exacto;
+file path;
+orden secuencial.
+
+Para cada nota:
+
+timestamp_ms exacto;
+texto.
+19.4. Manifiesto sugerido para segmentación
+
+El sistema podrá dejar un archivo auxiliar con sugerencias de anclaje, por ejemplo:
+
+{
+  "segmentation_hints": {
+    "anchor_events": [
+      {"type":"screenshot","timestamp_ms":41200,"file":"raw/screenshots/0001.png"},
+      {"type":"screenshot","timestamp_ms":91300,"file":"raw/screenshots/0002.png"}
+    ],
+    "default_pre_roll_ms": 5000,
+    "default_post_roll_ms": 5000
+  }
+}
+
+Esto permitirá que un pipeline posterior arme segmentos como:
+
+desde 0 a 46200
+desde 86200 a 96300
+etc., según la lógica definida en la etapa de interpretación.
+20. Requisitos de integridad de la sesión
+
+Al cerrar la sesión, el sistema debe validar:
+
+que exista la carpeta de sesión;
+que exista el audio principal, salvo error explícito registrado;
+que los screenshots declarados existan;
+que el conteo de eventos sea consistente;
+que los manifiestos estén actualizados;
+que el estado final quede marcado como cerrado.
+
+Si algo falla, la sesión no debe perderse.
+Debe quedar marcada con warnings o errores, pero utilizable.
+
+21. Requisitos de continuidad / reanudación
+21.1. Continuar sesión previa
+
+El sistema puede permitir reabrir una sesión previa, si su estado lo admite.
+
+21.2. Criterio recomendado para MVP
+
+Se recomienda un criterio simple:
+
+las sesiones finalizadas no se reanudan;
+las sesiones interrumpidas o incompletas sí pueden reabrirse de manera controlada.
+21.3. Si se implementa reanudación
+
+Debe registrarse evento session_resumed.
+
+22. Requisitos no funcionales
+22.1. Estabilidad
+
+La aplicación debe priorizar estabilidad por sobre sofisticación.
+
+22.2. Tolerancia a fallos
+
+No debe perderse toda la sesión por un fallo aislado de screenshot o nota.
+
+22.3. Rendimiento
+
+Debe ser capaz de grabar audio y tomar screenshots sin congelar la interfaz.
+
+22.4. Portabilidad
+
+Preferentemente compatible con Windows como plataforma principal de uso.
+Deseable dejar margen para Linux.
+
+22.5. Legibilidad de salida
+
+Los archivos generados deben ser fácilmente inspeccionables por humanos.
+
+22.6. Interoperabilidad
+
+Los formatos deben ser estándar y fáciles de procesar por scripts.
+
+23. Consideraciones de Dockerización
+23.1. Objetivo de dockerización
+
+Se desea que el proyecto sea dockerizable.
+
+23.2. Aclaración importante
+
+Dado que se trata de una aplicación local que interactúa con:
+
+micrófono;
+pantalla;
+filesystem del host;
+UI de escritorio;
+
+la dockerización no debe pensarse como el modo principal de ejecución para usuario final, sino como apoyo para:
+
+desarrollo;
+build reproducible;
+empaquetado;
+tareas auxiliares;
+validaciones de pipeline;
+procesamiento posterior.
+23.3. Recomendación
+
+Debe diseñarse el proyecto para:
+
+correr nativamente en Python para uso operativo diario;
+poder contenerizar partes auxiliares o herramientas de soporte;
+opcionalmente ofrecer una imagen docker para tareas batch o de postprocesamiento.
+23.4. Implicancias
+
+No se debe forzar una arquitectura absurda sólo por “dockerizar”.
+La usabilidad local tiene prioridad.
+
+23.5. Requisito razonable
+
+El repositorio del proyecto debe incluir:
+
+Dockerfile;
+docker-compose.yml opcional;
+instrucciones claras sobre qué partes pueden correrse en contenedor y cuáles deben correr nativamente.
+24. Requisitos de estructura del repositorio de la aplicación
+
+Se sugiere una estructura como:
+
+review-capture-app/
+  app/
+    ui/
+    services/
+    models/
+    persistence/
+    capture/
+    config/
+    utils/
+  tests/
+  scripts/
+  docs/
+  docker/
+  requirements.txt
+  pyproject.toml
+  README.md
+  Dockerfile
+  docker-compose.yml
+25. Requisitos de configuración global
+
+Debe existir una configuración global de la aplicación para:
+
+ruta del archivo SQLite;
+defaults de audio;
+defaults de screenshots;
+formato de nombre de carpeta;
+logging;
+ubicación de configs;
+comportamiento al cerrar sesión;
+nivel de validación.
+26. Logging
+
+La aplicación debe registrar logs locales.
+Debe existir al menos:
+
+log general de app;
+eventos relevantes de errores de captura;
+warnings de persistencia.
+
+Los logs deben quedar en un lugar conocido y predecible.
+
+27. Seguridad y privacidad
+27.1. Alcance
+
+La aplicación se usará localmente y puede capturar información sensible visible en pantalla o dicha por voz.
+
+27.2. Requisitos
+no debe subir datos automáticamente a servicios externos sin acción explícita;
+debe dejar claro dónde se guarda la información;
+debe permitir al usuario ubicar la carpeta de salida;
+debe minimizar sorpresas en la persistencia.
+28. Archivos objetivo para el handoff posterior a LLM
+
+Aunque el prompt de interpretación se definirá luego, la aplicación debe dejar lista la sesión para esa etapa.
+
+Archivos mínimos sugeridos:
+
+session_metadata.json
+session_manifest.json
+events.ndjson
+raw/audio/session_audio.*
+raw/screenshots/*.png
+raw/notes/quick_notes.ndjson
+llm_handoff_manifest.json
+README_SESSION.md
+29. Contenido esperado de README_SESSION.md
+
+Este archivo debe ser legible por un humano y útil como punto de entrada.
+
+Debe incluir:
+
+proyecto;
+título de sesión;
+tipo de revisión;
+inicio y fin;
+ruta relativa al audio;
+cantidad de screenshots;
+cantidad de notas;
+resumen de estructura;
+referencia a eventos.ndjson;
+aclaración de que derived/ está reservado para procesamiento posterior.
+30. Criterios de aceptación del MVP
+
+El MVP se considerará cumplido si:
+
+se puede crear un proyecto con ruta configurable;
+se puede crear una sesión;
+al iniciar sesión se crea la estructura de carpetas;
+se graba audio continuo;
+se pueden tomar screenshots manuales;
+se pueden agregar notas rápidas;
+cada acción queda registrada con timestamp;
+al finalizar, la sesión queda persistida localmente y consistente;
+existe un manifiesto legible y procesable;
+la carpeta de salida puede utilizarse posteriormente como input para un LLM externo.
+31. Criterios de diseño para futuras versiones
+
+Queda explícitamente previsto, pero fuera del MVP:
+
+anotación gráfica sobre screenshots;
+segmentación automática de audio;
+transcripción local opcional;
+integración directa con Gemini CLI;
+ejecución de prompts predefinidos desde la app;
+asociación a commits, PRs o tickets;
+OCR o análisis visual;
+resumen automático de hallazgos;
+exportadores especializados por asistente;
+captura de video.
+32. Recomendaciones técnicas orientativas para implementación
+
+No son obligatorias, pero se consideran recomendables:
+
+UI: PySide6
+screenshots: mss
+audio: sounddevice o equivalente estable
+persistencia de metadatos: SQLite
+formato de eventos: NDJSON
+configuración: archivos YAML o JSON
+logging: logging estándar de Python
+packaging: pyproject.toml
+ejecución principal: nativa
+contenedores: soporte complementario, no central
+33. Resumen ejecutivo de diseño
+
+La aplicación a desarrollar será una herramienta local de escritorio, orientada a captura de evidencia temporalmente estructurada durante sesiones de revisión de software.
+
+Su responsabilidad principal será:
+
+registrar sesión;
+grabar audio;
+capturar screenshots;
+almacenar notas rápidas;
+dejar todo correctamente persistido en filesystem local;
+preparar el material para procesamiento posterior por un LLM externo.
+
+La salida deberá ser:
+
+ordenada;
+estable;
+legible;
+reprocesable;
+configurable por proyecto;
+agnóstica respecto del asistente de interpretación posterior.
+
+No se busca un SaaS ni una aplicación web centrada en backend.
+Se busca una herramienta local práctica, robusta y extensible.
+
+34. Resumen
+
+Se solicita implementar una aplicación Python de escritorio, dockerizable en lo razonable, basada en la especificación anterior, priorizando:
+
+robustez local;
+filesystem configurable por proyecto;
+captura fiable de audio;
+captura manual de screenshots;
+notas rápidas;
+línea temporal de eventos;
+estructura de carpetas clara;
+manifiestos consistentes;
+preparación para procesamiento posterior por LLM.
+
+La implementación debe evitar complejidad innecesaria y privilegiar una arquitectura limpia y extensible.

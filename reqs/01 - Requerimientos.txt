@@ -1,0 +1,344 @@
+# Especificación funcional preliminar y detallada
+# Sistema local de captura de revisiones de software asistidas para posterior procesamiento por LLM
+# Versión: 0.1
+# Estado: borrador funcional-técnico
+# Objetivo: definir una aplicación local, orientada a uso personal/interno, para capturar evidencia estructurada durante sesiones de revisión/testing de software y dejarla en filesystem de forma ordenada para su posterior interpretación por Gemini CLI, Claude Code, Cloud Code u otros asistentes.
+
+---
+
+## 1. Propósito general
+
+Se requiere desarrollar una aplicación local de escritorio, preferentemente implementada en Python, cuyo objetivo sea asistir a un usuario revisor/tester durante el recorrido manual de una revisión funcional o técnica de software recientemente desarrollado.
+
+La aplicación deberá permitir:
+
+1. registrar sesiones de revisión asociadas a proyectos;
+2. grabar audio del revisor durante la sesión;
+3. tomar capturas de pantalla manuales del sistema bajo prueba;
+4. registrar notas textuales rápidas durante la sesión;
+5. mantener una línea temporal consistente de todos los eventos relevantes;
+6. persistir toda la información generada en filesystem local, en una ubicación configurable por proyecto;
+7. dejar un paquete de información cruda, ordenada y reutilizable, para que un LLM externo procese luego la evidencia y produzca transcripciones, resúmenes, correctivos, evolutivos, prompts de implementación, etc.
+
+El foco principal de esta primera etapa no es la interpretación inteligente en tiempo real, ni la resolución automática de tickets, sino la captura robusta y ordenada de evidencia.
+
+---
+
+## 2. Principios rectores del sistema
+
+### 2.1. Captura primero, procesamiento después
+La aplicación de captura no debe intentar resolver todo el pipeline de interpretación.
+Su responsabilidad principal es recolectar evidencia cruda de alta calidad y dejarla estructurada.
+
+### 2.2. Formato agnóstico al consumidor
+La salida no debe quedar atada exclusivamente a Gemini.
+La estructura generada debe poder ser utilizada por Gemini CLI, Claude Code, Cloud Code, scripts Python propios u otros asistentes futuros.
+
+### 2.3. Persistencia local robusta
+La información debe quedar persistida en filesystem local, evitando dependencias innecesarias de infraestructura remota.
+La ruta raíz de almacenamiento debe ser configurable por proyecto.
+
+### 2.4. Reprocesabilidad
+Los archivos crudos generados durante la sesión deben conservarse de manera inmutable o razonablemente estable, de forma que un mismo paquete pueda reprocesarse luego con distintos prompts, distintos modelos o distintos pipelines.
+
+### 2.5. Trazabilidad temporal
+Todo elemento capturado durante la sesión debe poder ubicarse en el tiempo con precisión suficiente como para reconstruir la secuencia de trabajo del revisor.
+
+### 2.6. Simplicidad operativa
+La experiencia de uso debe ser liviana y directa.
+La app debe estar pensada para uso real durante trabajo operativo, no para una demo.
+Debe minimizar pasos y fricción.
+
+---
+
+## 3. Alcance funcional del MVP
+
+La primera versión deberá incluir:
+
+1. administración local de proyectos;
+2. creación, continuación y visualización básica de sesiones;
+3. inicio y fin de sesión de revisión;
+4. grabación de audio del micrófono durante la sesión;
+5. captura manual de screenshots;
+6. registro de bloques de texto rápidos durante la sesión;
+7. almacenamiento local ordenado de toda la evidencia;
+8. registro de eventos temporales;
+9. generación de manifiestos/metadatos;
+10. preparación del material para procesamiento posterior por LLM.
+
+No será obligatorio en el MVP:
+
+1. transcripción integrada en tiempo real;
+2. transcripción local al finalizar la sesión;
+3. anotación gráfica sobre screenshots;
+4. grabación de video;
+5. colaboración multiusuario;
+6. backend remoto;
+7. sincronización en nube;
+8. integración directa obligatoria con Gemini CLI desde la propia app;
+9. ticketing integrado;
+10. OCR o visión artificial local durante la captura.
+
+---
+
+## 4. Caso de uso principal
+
+### 4.1. Escenario
+Un revisor/tester desea recorrer una funcionalidad o conjunto de funcionalidades de un sistema recientemente desarrollado.
+
+Durante la sesión, el revisor:
+- habla en voz alta explicando qué está haciendo;
+- toma capturas de pantalla en momentos relevantes;
+- agrega textos puntuales que es más conveniente escribir que dictar;
+- finaliza la sesión.
+
+La aplicación:
+- registra el momento de inicio;
+- guarda el audio;
+- guarda cada screenshot con timestamp y secuencia;
+- guarda cada bloque de texto con timestamp;
+- persiste metadatos de contexto;
+- deja una estructura de carpetas y archivos consistente.
+
+Luego, un LLM externo podrá leer ese paquete y producir:
+- transcripción;
+- línea de tiempo enriquecida;
+- reporte de hallazgos;
+- prompt de correctivo/evolutivo;
+- análisis del bug;
+- sugerencias técnicas;
+- otros artefactos derivados.
+
+---
+
+## 5. Supuestos de arquitectura
+
+### 5.1. Tipo de aplicación
+Se recomienda una aplicación de escritorio local construida en Python.
+
+### 5.2. UI recomendada
+Se recomienda PySide6 como framework de interfaz.
+Puede aceptarse otro toolkit si ofrece estabilidad equivalente.
+
+### 5.3. Persistencia
+- metadatos livianos: SQLite local;
+- archivos crudos y derivados: filesystem local.
+
+### 5.4. Captura de pantalla
+Debe implementarse captura manual de pantalla/monitor/región, según capacidad técnica del entorno operativo.
+
+### 5.5. Audio
+Debe implementarse grabación continua del micrófono durante la sesión.
+
+---
+
+## 6. Decisiones conceptuales importantes
+
+### 6.1. Reemplazo del canvas gráfico por bloques de texto rápidos
+En esta etapa, no se requiere edición/anotación gráfica sobre la imagen.
+En su lugar, el sistema debe ofrecer una funcionalidad simple de “nota rápida” o “bloque de texto”, para capturar información que resulte más conveniente escribir que dictar.
+
+Ejemplos:
+- URL exacta;
+- token temporal;
+- credenciales de prueba;
+- identificador;
+- mensaje de error copiado;
+- payload;
+- observación corta.
+
+### 6.2. Uso de screenshots como anclas de segmentación futura
+Los eventos de screenshot deberán registrarse con precisión temporal, ya que luego podrán utilizarse como puntos de corte o de referencia para segmentar el audio en el pipeline de transcripción/procesamiento posterior.
+
+Esto significa que el diseño de los metadatos debe permitir que un proceso posterior tome la lista de capturas y construya segmentos de audio alineados o semi-alineados con esos eventos.
+
+---
+
+## 7. Módulos funcionales
+
+### 7.1. Módulo de proyectos
+Responsable de administrar la configuración base por proyecto.
+
+### 7.2. Módulo de sesiones
+Responsable de crear, listar, abrir y cerrar sesiones de revisión.
+
+### 7.3. Módulo de captura de audio
+Responsable de grabar audio continuo del micrófono.
+
+### 7.4. Módulo de captura de screenshots
+Responsable de tomar capturas manuales y registrarlas como eventos.
+
+### 7.5. Módulo de notas rápidas
+Responsable de capturar textos cortos o medianos vinculados temporalmente a la sesión.
+
+### 7.6. Módulo de persistencia
+Responsable de generar carpetas, nombres, manifiestos y archivos.
+
+### 7.7. Módulo de export/preparación para LLM
+Responsable de dejar la sesión lista para consumo posterior por asistentes externos.
+
+---
+
+## 8. Entidades principales
+
+### 8.1. Proyecto
+Representa un sistema, repo o contexto de trabajo sobre el cual se realizan revisiones.
+
+Campos sugeridos:
+- project_id
+- code
+- name
+- description
+- default_storage_root
+- session_subpath_pattern
+- include_project_folder_inside_output (boolean)
+- repo_path (opcional)
+- preferred_output_format_version
+- llm_processing_profile (opcional)
+- active (boolean)
+- created_at
+- updated_at
+
+### 8.2. Sesión de revisión
+Representa una instancia concreta de trabajo de revisión.
+
+Campos sugeridos:
+- session_id
+- project_id
+- title
+- description
+- review_type
+- environment_name
+- tested_branch
+- related_ticket
+- tester_name
+- target_system_label
+- start_time
+- end_time
+- status
+- storage_path
+- notes_summary_manual (opcional)
+- created_at
+- updated_at
+
+### 8.3. Evento de sesión
+Representa cualquier hecho temporalmente ubicable durante la sesión.
+
+Tipos posibles:
+- session_started
+- audio_started
+- screenshot_taken
+- quick_note_added
+- marker_added
+- session_paused
+- session_resumed
+- session_finished
+- audio_stopped
+- error
+- system_message
+
+Campos sugeridos:
+- event_id
+- session_id
+- event_type
+- timestamp_absolute
+- timestamp_ms_from_session_start
+- sequence_number
+- payload_json
+
+### 8.4. Screenshot
+Entidad lógica derivada del evento de screenshot.
+
+Campos sugeridos:
+- screenshot_id
+- session_id
+- event_id
+- relative_file_path
+- absolute_file_path
+- file_name
+- width
+- height
+- capture_mode
+- display_index (si aplica)
+- window_label_detected (si existiera en una versión futura)
+- timestamp_absolute
+- timestamp_ms_from_session_start
+- sha256 (opcional)
+
+### 8.5. Nota rápida
+Entidad lógica derivada del evento de nota.
+
+Campos sugeridos:
+- note_id
+- session_id
+- event_id
+- text
+- category (opcional)
+- timestamp_absolute
+- timestamp_ms_from_session_start
+
+### 8.6. Audio de sesión
+Representa el archivo de audio principal y eventualmente sus piezas.
+
+Campos sugeridos:
+- audio_id
+- session_id
+- recording_file_path
+- format
+- sample_rate
+- channels
+- duration_ms
+- status
+- created_at
+
+---
+
+## 9. Configuración por proyecto
+
+Cada proyecto deberá permitir configurar al menos:
+
+1. nombre del proyecto;
+2. descripción;
+3. ruta raíz donde quedarán las sesiones;
+4. patrón de nombre de carpeta para cada sesión;
+5. si las sesiones se guardan dentro del repo o fuera del repo;
+6. ruta del repo asociada, si existe;
+7. nombre del tester por defecto;
+8. plantillas de tipos de review;
+9. perfil de exportación para LLM;
+10. formato de timestamp preferido;
+11. política de nombres de archivo;
+12. si se genera o no una carpeta "derived" vacía;
+13. si se generan o no archivos placeholder para procesamiento posterior.
+
+Ejemplo de configuraciones útiles:
+- root_path = D:/Repos/crm-frontend/.review_sessions
+- root_path = D:/ReviewWorkspace/crm-frontend
+- session_folder_pattern = {YYYY}-{MM}-{DD}_{HHmmss}_{slug}
+
+---
+
+## 10. Estructura de filesystem propuesta
+
+Se propone una estructura estándar por sesión.
+
+```text
+{project_storage_root}/
+  {session_folder}/
+    session_manifest.json
+    session_metadata.json
+    events.ndjson
+    README_SESSION.md
+    raw/
+      audio/
+        session_audio.webm
+      screenshots/
+        0001.png
+        0002.png
+        0003.png
+      notes/
+        quick_notes.ndjson
+    derived/
+      .gitkeep
+    logs/
+      app.log

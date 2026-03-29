@@ -1,0 +1,25 @@
+#001 - La nomenclatura de directorios en inconsistente. Por favor, ajustar para que siempre haya padding con zeros a la izquierda si son necesarios hasta completar 6 posiciones numéricas. Se muestra ejemplo de una corrida de prueba:
+
+PS D:\home\AI\claude_code\book-a-doc-review-test> dir
+
+
+    Directorio: D:\home\AI\claude_code\book-a-doc-review-test
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         28-mar-26   1:22 AM                2026-03-28_012215_rev-01
+d-----         28-mar-26   1:23 AM                2026-03-28_012315_rev-02
+d-----         28-mar-26   1:24 AM                2026-03-28_012406_rev-3
+
+#002 - En mi caso, tengo dos monitores. El software está tomando capturas de uno sólo, lo que habitualmente me resulta muy cómodo, no tengo problema con eso, pero sería bueno poder elegir el monitor.
+
+#003 - Además de poder elegir el monitor, sería bueno tener un pequeño thumbnail, que muestre en vivo cual es el monitor seleccionado, para que el operador tenga una indicación visual de lo que estaría capturando.
+
+#004 - Sería deseable que hubiera un nivel de "Issue" dentro de sesión. De ese modo el usuario podría dar hints muy claros dentro de la sesión, para el software que procese luego, de cuando termina un tema y empieza el otro. Esto debe ser claramente correspondido con la estructura de datos que se genere.
+
+#005 - Se debería poder inicial y detener la grabación de audio. Incluso varias veces por issue.
+
+#006 - Debería haber una indicación muy clara sobre si la captura de audio está operando o no.
+
+#007 - Se debería poder continuar un issue o sesión previa. Esto implica que debe haber indicaciónes visuales claras de sobre que sesion y issue se está trabajando. Del mismo modo, se deberían poder borrar issues existentes.
