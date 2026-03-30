@@ -111,106 +111,278 @@ class MainWin(QMainWindow):
 
     def init_active_session_screen(self):
         page = QWidget()
-        layout = QHBoxLayout(page)
+        main_layout = QVBoxLayout(page)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(15)
 
-        # Left Column: Info, Timer, Controls
-        left_panel = QVBoxLayout()
-        layout.addLayout(left_panel, 2)
-
-        self.lbl_session_info = QLabel("Sesión Activa")
-        self.lbl_session_info.setFont(QFont("Arial", 14, QFont.Bold))
-        left_panel.addWidget(self.lbl_session_info)
+        # --- 1. Header Superior de Contexto ---
+        header_frame = QFrame()
+        header_frame.setFrameShape(QFrame.StyledPanel)
+        header_frame.setStyleSheet("background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;")
+        header_layout = QHBoxLayout(header_frame)
+        
+        info_layout = QVBoxLayout()
+        self.lbl_project_info = QLabel("Proyecto: -")
+        self.lbl_project_info.setFont(QFont("Arial", 16, QFont.Bold))
+        self.lbl_project_info.setStyleSheet("border: none; color: #212529;")
+        
+        self.lbl_session_info = QLabel("Sesión: -")
+        self.lbl_session_info.setFont(QFont("Arial", 11))
+        self.lbl_session_info.setStyleSheet("border: none; color: #6c757d;")
+        
+        info_layout.addWidget(self.lbl_project_info)
+        info_layout.addWidget(self.lbl_session_info)
+        header_layout.addLayout(info_layout, 3)
 
         self.lbl_timer = QLabel("00:00:00")
-        self.lbl_timer.setFont(QFont("Courier New", 24))
-        self.lbl_timer.setAlignment(Qt.AlignCenter)
-        left_panel.addWidget(self.lbl_timer)
+        self.lbl_timer.setFont(QFont("Courier New", 28, QFont.Bold))
+        self.lbl_timer.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.lbl_timer.setStyleSheet("border: none; color: #0d6efd;")
+        header_layout.addWidget(self.lbl_timer, 1)
 
-        # Monitor Selection & Thumbnail
-        mon_group = QGroupBox("Monitor para Capturas")
-        mon_layout = QVBoxLayout(mon_group)
+        main_layout.addWidget(header_frame)
+
+        # --- 2. Cuerpo Principal (Dos Columnas) ---
+        body_layout = QHBoxLayout()
+        main_layout.addLayout(body_layout)
+
+        # Columna Principal Izquierda (Operación)
+        left_col = QVBoxLayout()
+        body_layout.addLayout(left_col, 2)
+
+        # Bloque: Capturas de pantalla
+        cap_group = QGroupBox("Capturas de pantalla")
+        cap_layout = QVBoxLayout(cap_group)
+        
+        cap_ctrls = QHBoxLayout()
         self.combo_monitors = QComboBox()
         self.refresh_monitors()
-        mon_layout.addWidget(self.combo_monitors)
+        cap_ctrls.addWidget(QLabel("Monitor:"))
+        cap_ctrls.addWidget(self.combo_monitors, 1)
+        cap_layout.addLayout(cap_ctrls)
 
-        self.lbl_thumbnail = QLabel("Cargando vista previa...")
-        self.lbl_thumbnail.setFixedSize(240, 135)
-        self.lbl_thumbnail.setStyleSheet("border: 1px solid #ccc; background-color: black;")
+        preview_layout = QHBoxLayout()
+        self.lbl_thumbnail = QLabel("Vista previa")
+        self.lbl_thumbnail.setFixedSize(320, 180)
+        self.lbl_thumbnail.setStyleSheet("border: 2px solid #adb5bd; background-color: black; border-radius: 4px;")
         self.lbl_thumbnail.setAlignment(Qt.AlignCenter)
-        mon_layout.addWidget(self.lbl_thumbnail)
-        left_panel.addWidget(mon_group)
+        preview_layout.addStretch()
+        preview_layout.addWidget(self.lbl_thumbnail)
+        preview_layout.addStretch()
+        cap_layout.addLayout(preview_layout)
 
-        # Audio Control
-        audio_group = QGroupBox("Grabación de Audio")
-        audio_layout = QHBoxLayout(audio_group)
-        self.btn_audio_toggle = QPushButton("Iniciar Audio")
+        self.btn_screenshot = QPushButton("Tomar Captura")
+        self.btn_screenshot.setMinimumHeight(50)
+        self.btn_screenshot.setFont(QFont("Arial", 12, QFont.Bold))
+        self.btn_screenshot.setStyleSheet("background-color: #0d6efd; color: white; border-radius: 6px;")
+        self.btn_screenshot.clicked.connect(self.take_screenshot)
+        cap_layout.addWidget(self.btn_screenshot)
+        left_col.addWidget(cap_group)
+
+        # Bloque: Grabación de audio
+        audio_group = QGroupBox("Grabación de audio")
+        audio_layout = QVBoxLayout(audio_group)
+        
+        status_layout = QHBoxLayout()
+        self.lbl_audio_indicator = QLabel("○")
+        self.lbl_audio_indicator.setFont(QFont("Arial", 24))
+        self.lbl_audio_indicator.setStyleSheet("color: #6c757d;")
+        self.lbl_audio_status_text = QLabel("Estado: Detenido")
+        self.lbl_audio_status_text.setFont(QFont("Arial", 12, QFont.Bold))
+        status_layout.addWidget(self.lbl_audio_indicator)
+        status_layout.addWidget(self.lbl_audio_status_text)
+        status_layout.addStretch()
+        audio_layout.addLayout(status_layout)
+
+        self.btn_audio_toggle = QPushButton("Iniciar grabación")
+        self.btn_audio_toggle.setMinimumHeight(40)
         self.btn_audio_toggle.clicked.connect(self.toggle_audio)
         audio_layout.addWidget(self.btn_audio_toggle)
+        left_col.addWidget(audio_group)
 
-        self.lbl_audio_status = QLabel("●")
-        self.lbl_audio_status.setStyleSheet("color: gray;")
-        self.lbl_audio_status.setFont(QFont("Arial", 20))
-        audio_layout.addWidget(self.lbl_audio_status)
-        left_panel.addWidget(audio_group)
-
-        # Issue Management
-        issue_group = QGroupBox("Gestión de Issue")
+        # Bloque: Gestión de issue
+        issue_group = QGroupBox("Gestión de issue")
         issue_layout = QVBoxLayout(issue_group)
+        
         self.lbl_active_issue = QLabel("Ningún issue activo")
-        self.lbl_active_issue.setStyleSheet("font-style: italic;")
+        issue_font = QFont("Arial", 11)
+        issue_font.setItalic(True)
+        self.lbl_active_issue.setFont(issue_font)
+        self.lbl_active_issue.setStyleSheet("color: #6c757d; padding: 5px;")
         issue_layout.addWidget(self.lbl_active_issue)
 
-        issue_ctrls = QHBoxLayout()
-        self.btn_start_issue = QPushButton("Nuevo Issue")
+        issue_btns = QHBoxLayout()
+        self.btn_start_issue = QPushButton("Nuevo issue")
         self.btn_start_issue.clicked.connect(self.start_new_issue)
-        self.btn_stop_issue = QPushButton("Finalizar Issue")
+        self.btn_stop_issue = QPushButton("Finalizar issue")
         self.btn_stop_issue.clicked.connect(self.stop_current_issue)
         self.btn_stop_issue.setEnabled(False)
-        issue_ctrls.addWidget(self.btn_start_issue)
-        issue_ctrls.addWidget(self.btn_stop_issue)
-        issue_layout.addLayout(issue_ctrls)
-        left_panel.addWidget(issue_group)
+        issue_btns.addWidget(self.btn_start_issue)
+        issue_btns.addWidget(self.btn_stop_issue)
+        issue_layout.addLayout(issue_btns)
+        left_col.addWidget(issue_group)
 
-        # General Controls
-        btn_screenshot = QPushButton("Tomar Captura")
-        btn_screenshot.setMinimumHeight(60)
-        btn_screenshot.clicked.connect(self.take_screenshot)
-        left_panel.addWidget(btn_screenshot)
-        
-        btn_stop = QPushButton("Finalizar Sesión")
-        btn_stop.setStyleSheet("background-color: #ff4444; color: white; font-weight: bold;")
-        btn_stop.setMinimumHeight(40)
-        btn_stop.clicked.connect(self.stop_session)
-        left_panel.addWidget(btn_stop)
+        # Columna Lateral Derecha (Soporte)
+        right_col = QVBoxLayout()
+        body_layout.addLayout(right_col, 1)
 
-        # Right Column: Notes and Feed
-        right_panel = QVBoxLayout()
-        layout.addLayout(right_panel, 1)
-
-        right_panel.addWidget(QLabel("Nota Rápida:"))
+        # Bloque: Nota rápida
+        note_group = QGroupBox("Nota rápida")
+        note_layout = QVBoxLayout(note_group)
         self.edit_note = QTextEdit()
         self.edit_note.setMaximumHeight(80)
-        right_panel.addWidget(self.edit_note)
-        
-        btn_add_note = QPushButton("Agregar Nota")
-        btn_add_note.clicked.connect(self.add_note)
-        right_panel.addWidget(btn_add_note)
+        self.edit_note.setPlaceholderText("Escriba una observación breve...")
+        note_layout.addWidget(self.edit_note)
+        self.btn_add_note = QPushButton("Agregar nota")
+        self.btn_add_note.clicked.connect(self.add_note)
+        note_layout.addWidget(self.btn_add_note)
+        right_col.addWidget(note_group)
 
-        right_panel.addWidget(QLabel("Issues de la Sesión:"))
+        # Bloque: Issues registrados
+        issues_reg_group = QGroupBox("Issues registrados en esta sesión")
+        issues_reg_layout = QVBoxLayout(issues_reg_group)
         self.issue_list = QListWidget()
         self.issue_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.issue_list.customContextMenuRequested.connect(self.show_issue_context_menu)
-        right_panel.addWidget(self.issue_list)
+        issues_reg_layout.addWidget(self.issue_list)
+        right_col.addWidget(issues_reg_group)
 
-        right_panel.addWidget(QLabel("Eventos Recientes:"))
+        # Bloque: Eventos recientes
+        event_group = QGroupBox("Eventos recientes")
+        event_layout = QVBoxLayout(event_group)
         self.event_feed = QListWidget()
-        right_panel.addWidget(self.event_feed)
+        self.event_feed.setStyleSheet("font-size: 10px; color: #495057;")
+        event_layout.addWidget(self.event_feed)
+        right_col.addWidget(event_group)
+
+        # --- 3. Franja Inferior de Cierre ---
+        footer_layout = QHBoxLayout()
+        footer_layout.addStretch()
+        btn_finish_session = QPushButton("Finalizar Sesión")
+        btn_finish_session.setMinimumSize(200, 40)
+        btn_finish_session.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                font-weight: bold;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #bb2d3b;
+            }
+        """)
+        btn_finish_session.clicked.connect(self.stop_session)
+        footer_layout.addWidget(btn_finish_session)
+        footer_layout.addStretch()
+        main_layout.addLayout(footer_layout)
 
         self.stacked_widget.addWidget(page)
 
-        # Timer
+        # Timers
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_ui_timer)
+
+    def start_session_ui(self, session, project_name):
+        self.lbl_project_info.setText(f"Proyecto: {project_name}")
+        self.lbl_session_info.setText(f"Sesión: {session.title}")
+        self.event_feed.clear()
+        self.event_feed.addItem(f"[{datetime.now().strftime('%H:%M:%S')}] Sesión iniciada/reanudada")
+        
+        self.session_start_time = datetime.now()
+        self.timer.start(1000)
+        self.stacked_widget.setCurrentIndex(2)
+        
+        # Reset Audio and Issue UI
+        self.lbl_audio_indicator.setText("○")
+        self.lbl_audio_indicator.setStyleSheet("color: #6c757d;")
+        self.lbl_audio_status_text.setText("Estado: Detenido")
+        self.btn_audio_toggle.setText("Iniciar grabación")
+        
+        self.lbl_active_issue.setText("Ningún issue activo")
+        self.lbl_active_issue.setStyleSheet("color: #6c757d; font-style: italic;")
+        self.btn_start_issue.setEnabled(True)
+        self.btn_stop_issue.setEnabled(False)
+
+    def toggle_audio(self):
+        is_recording = self.session_manager.toggle_audio_recording()
+        if is_recording:
+            self.btn_audio_toggle.setText("Detener grabación")
+            self.lbl_audio_indicator.setText("●")
+            self.lbl_audio_indicator.setStyleSheet("color: #dc3545;")
+            self.lbl_audio_status_text.setText("Estado: Grabando")
+            self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Grabación de audio iniciada")
+        else:
+            self.btn_audio_toggle.setText("Iniciar grabación")
+            self.lbl_audio_indicator.setText("○")
+            self.lbl_audio_indicator.setStyleSheet("color: #6c757d;")
+            self.lbl_audio_status_text.setText("Estado: Detenido")
+            self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Grabación de audio detenida")
+
+    def start_new_issue(self):
+        title, ok = QInputDialog.getText(self, "Nuevo Issue", "Título del Issue:")
+        if not ok or not title:
+            return
+            
+        issue = self.session_manager.start_issue(title)
+        self.lbl_active_issue.setText(f"Issue activo: {title}")
+        self.lbl_active_issue.setStyleSheet("font-weight: bold; color: #0d6efd;")
+        self.btn_start_issue.setEnabled(False)
+        self.btn_stop_issue.setEnabled(True)
+        self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue iniciado: {title}")
+        self.refresh_issue_list()
+
+    def stop_current_issue(self):
+        issue = self.session_manager.stop_issue()
+        self.lbl_active_issue.setText("Ningún issue activo")
+        self.lbl_active_issue.setStyleSheet("color: #6c757d; font-style: italic;")
+        self.btn_start_issue.setEnabled(True)
+        self.btn_stop_issue.setEnabled(False)
+        self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue finalizado: {issue.title}")
+        self.refresh_issue_list()
+
+    def show_issue_context_menu(self, position):
+        item = self.issue_list.itemAt(position)
+        if not item: return
+        
+        from PySide6.QtWidgets import QMenu
+        menu = QMenu()
+        delete_action = menu.addAction("Eliminar Issue")
+        action = menu.exec_(self.issue_list.mapToGlobal(position))
+        
+        if action == delete_action:
+            idx = self.issue_list.row(item)
+            issues = self.db.get_issues_by_session(self.session_manager.active_session.session_id)
+            issue = issues[idx]
+            
+            confirm = QMessageBox.question(self, "Confirmar", f"¿Eliminar el issue '{issue.title}'?", 
+                                         QMessageBox.Yes | QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                self.db.delete_issue(issue.issue_id)
+                self.refresh_issue_list()
+                self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue eliminado: {issue.title}")
+
+    def refresh_issue_list(self):
+        self.issue_list.clear()
+        if not self.session_manager.active_session: return
+        issues = self.db.get_issues_by_session(self.session_manager.active_session.session_id)
+        for iss in issues:
+            item = QListWidgetItem(f"{iss.title} ({iss.status})")
+            # In a full implementation, we could add a delete button here
+            self.issue_list.addItem(item)
+
+    def add_note(self):
+        text = self.edit_note.toPlainText()
+        if not text:
+            return
+        self.session_manager.add_quick_note(text)
+        self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Nota agregada")
+        self.edit_note.clear()
+
+    def update_ui_timer(self):
+        delta = datetime.now() - self.session_start_time
+        hours, remainder = divmod(int(delta.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        self.lbl_timer.setText(f"{hours:02d}:{minutes:02d}:{seconds:02d}")
 
     # UI Logic
     def refresh_projects(self):
@@ -250,6 +422,7 @@ class MainWin(QMainWindow):
             return
             
         mon_idx = self.combo_monitors.currentData()
+        if mon_idx is None: return
         try:
             import mss
             import mss.tools
@@ -309,23 +482,6 @@ class MainWin(QMainWindow):
         self.start_session_ui(session, project_name)
         self.refresh_issue_list()
 
-    def start_session_ui(self, session, project_name):
-        self.lbl_session_info.setText(f"Sesión: {session.title} | Proyecto: {project_name}")
-        self.event_feed.clear()
-        self.event_feed.addItem(f"[{datetime.now().strftime('%H:%M:%S')}] Sesión iniciada/reanudada")
-        
-        self.session_start_time = datetime.now()
-        self.timer.start(1000)
-        self.stacked_widget.setCurrentIndex(2)
-        self.lbl_audio_status.setStyleSheet("color: gray;")
-        self.btn_audio_toggle.setText("Iniciar Audio")
-
-    def update_ui_timer(self):
-        delta = datetime.now() - self.session_start_time
-        hours, remainder = divmod(int(delta.total_seconds()), 3600)
-        minutes, seconds = divmod(remainder, 60)
-        self.lbl_timer.setText(f"{hours:02d}:{minutes:02d}:{seconds:02d}")
-
     def take_screenshot(self):
         try:
             mon_idx = self.combo_monitors.currentData()
@@ -333,77 +489,6 @@ class MainWin(QMainWindow):
             self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Captura: {shot.file_name}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al capturar: {str(e)}")
-
-    def toggle_audio(self):
-        is_recording = self.session_manager.toggle_audio_recording()
-        if is_recording:
-            self.btn_audio_toggle.setText("Detener Audio")
-            self.lbl_audio_status.setStyleSheet("color: red;")
-            self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Grabación de audio iniciada")
-        else:
-            self.btn_audio_toggle.setText("Iniciar Audio")
-            self.lbl_audio_status.setStyleSheet("color: gray;")
-            self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Grabación de audio detenida")
-
-    def start_new_issue(self):
-        title, ok = QInputDialog.getText(self, "Nuevo Issue", "Título del Issue:")
-        if not ok or not title:
-            return
-            
-        issue = self.session_manager.start_issue(title)
-        self.lbl_active_issue.setText(f"Activo: {title}")
-        self.lbl_active_issue.setStyleSheet("font-weight: bold; color: blue;")
-        self.btn_start_issue.setEnabled(False)
-        self.btn_stop_issue.setEnabled(True)
-        self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue iniciado: {title}")
-        self.refresh_issue_list()
-
-    def stop_current_issue(self):
-        issue = self.session_manager.stop_issue()
-        self.lbl_active_issue.setText("Ningún issue activo")
-        self.lbl_active_issue.setStyleSheet("font-style: italic;")
-        self.btn_start_issue.setEnabled(True)
-        self.btn_stop_issue.setEnabled(False)
-        self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue finalizado: {issue.title}")
-        self.refresh_issue_list()
-
-    def show_issue_context_menu(self, position):
-        item = self.issue_list.itemAt(position)
-        if not item: return
-        
-        from PySide6.QtWidgets import QMenu
-        menu = QMenu()
-        delete_action = menu.addAction("Eliminar Issue")
-        action = menu.exec_(self.issue_list.mapToGlobal(position))
-        
-        if action == delete_action:
-            idx = self.issue_list.row(item)
-            issues = self.db.get_issues_by_session(self.session_manager.active_session.session_id)
-            issue = issues[idx]
-            
-            confirm = QMessageBox.question(self, "Confirmar", f"¿Eliminar el issue '{issue.title}'?", 
-                                         QMessageBox.Yes | QMessageBox.No)
-            if confirm == QMessageBox.Yes:
-                self.db.delete_issue(issue.issue_id)
-                self.refresh_issue_list()
-                self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue eliminado: {issue.title}")
-
-    def refresh_issue_list(self):
-        self.issue_list.clear()
-        if not self.session_manager.active_session: return
-        issues = self.db.get_issues_by_session(self.session_manager.active_session.session_id)
-        for iss in issues:
-            item = QListWidgetItem(f"{iss.title} ({iss.status})")
-            # In a full implementation, we could add a delete button here
-            self.issue_list.addItem(item)
-
-    def add_note(self):
-        text = self.edit_note.toPlainText()
-        if not text:
-            return
-        self.session_manager.add_quick_note(text)
-        self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Nota agregada")
-        self.edit_note.clear()
 
     def stop_session(self):
         self.timer.stop()

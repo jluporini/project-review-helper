@@ -1,0 +1,604 @@
+# Especificación de rediseño de interfaz
+# Aplicación: Review Capture Assist
+# Objetivo: reorganizar la pantalla principal para que refleje mejor el flujo real de trabajo,
+# mejore la jerarquía visual, incremente la intuición de uso y logre una estética más ordenada.
+
+## 1. Objetivo general
+
+Rediseñar la pantalla principal manteniendo la funcionalidad actual, pero reorganizando los componentes visuales para que:
+
+1. La jerarquía entre Proyecto, Sesión y estado actual quede clara.
+2. Las acciones operativas principales estén agrupadas por tarea.
+3. Los controles relacionados con capturas estén en una sola sección coherente.
+4. La grabación de audio tenga mejor visibilidad de estado.
+5. La gestión de issues sea más clara como estado operativo.
+6. Las notas, el listado de issues y el log de eventos queden presentados como soporte y seguimiento, no como acciones principales.
+7. La interfaz general se vea más equilibrada, menos improvisada y más profesional.
+
+---
+
+## 2. Principios de diseño a respetar
+
+### 2.1. Agrupación funcional
+Los elementos deben agruparse según la tarea que representan, no según el tipo técnico de widget.
+
+Ejemplo:
+- El selector de monitor, el thumbnail y el botón "Tomar captura" deben estar en la misma sección porque pertenecen al flujo de captura.
+
+### 2.2. Jerarquía visual explícita
+La interfaz debe mostrar claramente:
+1. Qué proyecto está activo.
+2. Qué sesión está activa.
+3. Cuál es la duración actual.
+4. Qué estados relevantes existen en este momento (audio, issue activo, etc.).
+
+### 2.3. Cercanía entre contexto y acción
+Toda acción debe estar cerca del contexto que la determina.
+
+Ejemplo:
+- El botón de captura no debe estar separado visualmente del selector de monitor ni del preview.
+
+### 2.4. Separación entre operación y registro
+La interfaz debe distinguir:
+- zona de operación en vivo;
+- zona de apoyo / seguimiento / registro.
+
+### 2.5. Prioridad visual para lo que ocurre en tiempo real
+Deben tener más peso visual:
+- duración de sesión;
+- estado de audio;
+- issue activo;
+- acciones de captura;
+- apertura/cierre de issues.
+
+Deben tener menos peso visual:
+- log histórico;
+- listados informativos;
+- elementos secundarios.
+
+### 2.6. Consistencia visual
+Cada sección funcional debe tener:
+- un título claro;
+- un estado visible;
+- una o más acciones asociadas;
+- márgenes y espaciados consistentes.
+
+---
+
+## 3. Estructura general propuesta
+
+La pantalla debe organizarse en 3 grandes áreas:
+
+1. Header superior de contexto
+2. Cuerpo principal en dos columnas
+3. Franja inferior de cierre de sesión
+
+---
+
+## 4. Estructura detallada
+
+## 4.1. Header superior de contexto
+
+### Objetivo
+Mostrar el contexto global de trabajo y el estado principal de la sesión.
+
+### Contenido
+El header debe incluir como mínimo:
+
+- Proyecto activo
+- Sesión activa
+- Duración de sesión
+- Opcionalmente, estados resumidos:
+  - audio grabando / detenido
+  - issue activo / sin issue activo
+
+### Jerarquía
+La jerarquía conceptual debe reflejarse visualmente:
+
+1. Proyecto
+2. Sesión
+3. Duración / estado
+
+### Reglas
+- Proyecto debe verse más importante que Sesión.
+- Sesión debe verse como subordinada al Proyecto.
+- La duración debe verse como un dato central de la sesión, no como un texto aislado en medio de la pantalla.
+- El orden correcto es:
+  - Proyecto
+  - Sesión
+  - Duración
+
+### Ejemplo de contenido
+- Proyecto: Prueba 3
+- Sesión: rev-000002
+- Duración: 00:00:07
+
+### Recomendación visual
+- Usar un bloque superior compacto y claramente separado del resto.
+- Proyecto en tipografía más destacada.
+- Sesión en tipografía secundaria.
+- Duración en tipografía grande pero integrada al header, no flotante.
+
+---
+
+## 4.2. Cuerpo principal
+
+El cuerpo principal debe dividirse en dos columnas:
+
+### Columna principal izquierda
+Debe contener los bloques operativos de la sesión:
+1. Capturas de pantalla
+2. Grabación de audio
+3. Gestión de issue
+
+### Columna lateral derecha
+Debe contener los bloques de apoyo y seguimiento:
+1. Nota rápida
+2. Issues de la sesión
+3. Eventos recientes
+
+---
+
+## 5. Sección: Capturas de pantalla
+
+### Objetivo
+Concentrar en una sola sección todo lo relativo a la selección de fuente de captura, visualización previa y ejecución de la captura.
+
+### Problema actual a resolver
+Actualmente:
+- el selector de monitor y el thumbnail están en un bloque;
+- el botón "Tomar Captura" aparece bastante más abajo;
+- esto rompe la relación visual entre contexto y acción.
+
+### Requerimiento de rediseño
+Crear una sección titulada:
+
+- "Capturas de pantalla"
+o equivalente similar.
+
+### Elementos obligatorios de esta sección
+1. Selector de monitor
+2. Vista previa / thumbnail del monitor seleccionado
+3. Botón principal "Tomar captura"
+
+### Elementos opcionales recomendados
+4. Texto de detalle del monitor seleccionado
+5. Información de última captura realizada
+6. Estado de disponibilidad de captura
+
+### Reglas de layout
+- El botón "Tomar captura" debe estar físicamente cerca del thumbnail y del selector.
+- El usuario debe poder entender de inmediato que el monitor elegido es el que se capturará al presionar el botón.
+- El preview debe tener tamaño suficiente para ser útil, pero sin dominar la pantalla.
+- El botón debe estar dentro de la misma tarjeta o bloque visual.
+
+### Reglas de UX
+- La sección debe contar una historia completa:
+  1. elijo monitor,
+  2. veo preview,
+  3. tomo captura.
+
+### Acción principal
+- "Tomar captura" debe ser el CTA principal de la sección.
+
+### Recomendación visual
+- El título de la sección debe estar arriba.
+- Debajo, el selector.
+- Debajo o al lado, el thumbnail.
+- Justo debajo o al lado del thumbnail, el botón de captura.
+
+---
+
+## 6. Sección: Grabación de audio
+
+### Objetivo
+Hacer mucho más evidente el estado del audio y sus acciones asociadas.
+
+### Problema actual a resolver
+Actualmente:
+- existe un botón para iniciar audio;
+- existe un punto indicador;
+- el estado no es suficientemente explícito;
+- el punto por sí solo puede resultar ambiguo.
+
+### Requerimiento de rediseño
+Crear una sección titulada:
+
+- "Grabación de audio"
+o equivalente similar.
+
+### Elementos obligatorios
+1. Estado textual de audio
+2. Indicador visual de estado
+3. Botón de acción principal
+
+### Estados posibles
+- Detenido
+- Grabando
+
+### Reglas de UX
+- El estado no debe depender solo del color de un punto.
+- Siempre debe mostrarse texto junto al indicador visual.
+- El botón debe cambiar según el estado:
+  - si está detenido: "Iniciar grabación"
+  - si está grabando: "Detener grabación"
+
+### Elementos opcionales recomendados
+4. Duración del audio actual
+5. Nombre o identificador del archivo generado
+6. Hora de inicio de grabación
+7. Estado del micrófono o dispositivo seleccionado
+
+### Recomendación visual
+- Estado visible en la parte superior de la sección.
+- Indicador y texto juntos.
+- Botón principal debajo o a la derecha del estado.
+- Si existe información temporal del audio, ubicarla en texto secundario.
+
+### Ejemplos de presentación
+- Estado: Grabando
+- Estado: Detenido
+
+o bien:
+- ● Grabando
+- ○ Detenido
+
+pero siempre acompañado de texto.
+
+---
+
+## 7. Sección: Gestión de issue
+
+### Objetivo
+Hacer que el manejo de issues se perciba como parte central del flujo de trabajo, no como un simple par de botones.
+
+### Problema actual a resolver
+Actualmente:
+- la sección existe, pero tiene poca expresividad visual;
+- "Ningún issue activo" está bien como mensaje, pero el bloque no comunica suficiente importancia;
+- la gestión parece demasiado plana.
+
+### Requerimiento de rediseño
+Crear una sección titulada:
+
+- "Gestión de issue"
+o
+- "Issue actual"
+
+### Elementos obligatorios
+1. Estado actual del issue
+2. Botón "Nuevo issue"
+3. Botón "Finalizar issue"
+
+### Estados posibles
+- Ningún issue activo
+- Issue activo: <nombre o identificador>
+
+### Reglas funcionales
+- Si no hay issue activo:
+  - "Nuevo issue" habilitado
+  - "Finalizar issue" deshabilitado
+- Si hay issue activo:
+  - "Nuevo issue" puede permanecer habilitado o no según lógica de negocio, pero debe evaluarse cuidadosamente
+  - "Finalizar issue" habilitado
+
+### Elementos opcionales recomendados
+4. Nombre del issue activo
+5. Hora de inicio del issue activo
+6. Duración del issue activo
+7. Breve metadata del issue
+
+### Reglas de UX
+- El estado del issue debe ser visible de inmediato.
+- Debe quedar claro si el usuario está trabajando actualmente dentro de un issue o no.
+- El bloque debe funcionar como “estado operativo actual”.
+
+### Recomendación visual
+- Título arriba.
+- Debajo, texto de estado.
+- Debajo, fila de acciones.
+- Si hay issue activo, mostrar un pequeño resumen en texto secundario.
+
+---
+
+## 8. Columna lateral derecha
+
+La columna derecha debe organizarse como zona de apoyo y seguimiento, no como zona de operación principal.
+
+Orden sugerido:
+1. Nota rápida
+2. Issues de la sesión
+3. Eventos recientes
+
+---
+
+## 9. Sección: Nota rápida
+
+### Objetivo
+Permitir ingreso rápido de observaciones cortas sin competir visualmente con las acciones principales.
+
+### Requerimiento de rediseño
+Mantener una sección titulada:
+- "Nota rápida"
+
+### Elementos obligatorios
+1. Campo de texto multilinea
+2. Botón "Agregar nota"
+
+### Reglas de UX
+- Debe ser cómodo para escribir una observación breve.
+- El botón debe estar claramente asociado al campo.
+- No debe ocupar más espacio del necesario si la nota rápida está pensada como input breve.
+
+### Recomendación visual
+- Campo arriba
+- Botón justo debajo
+- Buen espaciado interno
+- Mantenerlo compacto para no consumir demasiado alto de pantalla
+
+---
+
+## 10. Sección: Issues de la sesión
+
+### Objetivo
+Permitir ver el listado de issues generados dentro de la sesión actual.
+
+### Problema actual a resolver
+La lista es útil, pero puede mejorarse en claridad y jerarquía.
+
+### Requerimiento de rediseño
+Crear una sección titulada:
+
+- "Issues de la sesión"
+o mejor:
+- "Issues registrados en esta sesión"
+
+### Elementos obligatorios
+1. Lista de issues
+2. Scroll cuando aplique
+
+### Elementos opcionales recomendados
+3. Indicador visual del issue activo
+4. Estado visual del issue:
+   - activo
+   - finalizado
+5. Cantidad total de issues
+
+### Reglas de UX
+- Debe ser fácil distinguir issues cerrados de uno activo.
+- Si existe un issue activo, debe destacarse visualmente.
+- La lista debe ser claramente consultiva; no debe parecer un formulario editable salvo que realmente lo sea.
+
+### Recomendación visual
+- Priorizar legibilidad.
+- Asegurar márgenes internos y buen espaciado entre ítems.
+- Si se puede, usar formato consistente para estado:
+  - Issue_01 (finished)
+  - Issue_02 (active)
+
+---
+
+## 11. Sección: Eventos recientes
+
+### Objetivo
+Presentar el histórico reciente de acciones de forma legible y secundaria.
+
+### Problema actual a resolver
+Actualmente el log tiene utilidad, pero visualmente compite más de lo que debería con las acciones principales.
+
+### Requerimiento de rediseño
+Mantener una sección titulada:
+- "Eventos recientes"
+
+### Elementos obligatorios
+1. Área de log con scroll
+2. Listado cronológico de eventos
+
+### Recomendaciones de contenido
+Cada evento debería mostrar, idealmente:
+- timestamp
+- tipo de evento
+- descripción breve
+
+### Ejemplos
+- [19:39:21] Sesión iniciada
+- [19:40:05] Captura tomada
+- [19:41:10] Grabación iniciada
+- [19:42:00] Issue creado: Issue_03
+
+### Reglas de UX
+- Debe sentirse como un panel histórico.
+- No debe tener más protagonismo visual que las acciones operativas.
+- La fuente puede ser levemente más pequeña que la del resto de la UI si mejora el carácter de log.
+
+### Elementos opcionales recomendados
+- íconos por tipo de evento
+- colores sutiles por categoría
+- orden descendente con lo más reciente primero, si tiene sentido para el flujo
+
+---
+
+## 12. Botón "Finalizar Sesión"
+
+### Problema actual a resolver
+Actualmente tiene demasiado peso visual:
+- es muy ancho;
+- muy agresivo cromáticamente;
+- domina la pantalla más de lo conveniente.
+
+### Objetivo
+Mantenerlo visible e importante, pero sin robar protagonismo constante al resto del flujo.
+
+### Requerimiento de rediseño
+Ubicar "Finalizar sesión" en una franja inferior o área claramente separada del cuerpo principal.
+
+### Reglas visuales
+- Debe seguir viéndose como acción de cierre / acción destructiva o de alto impacto.
+- Debe conservar diferenciación visual respecto de otros botones.
+- No debe dominar toda la composición.
+- Debe verse importante, pero no invasivo.
+
+### Reglas de UX
+- Debe quedar claro que esta acción termina la sesión.
+- Si ya existe confirmación al hacer click, mantenerla.
+- Si no existe, considerar agregar confirmación para evitar cierres accidentales.
+
+---
+
+## 13. Jerarquía visual recomendada
+
+## Nivel 1: máxima prioridad visual
+- Proyecto activo
+- Duración de sesión
+- Acciones de captura
+- Estado de grabación de audio
+- Estado del issue actual
+
+## Nivel 2: prioridad media
+- Sesión activa
+- Nota rápida
+- Lista de issues de la sesión
+
+## Nivel 3: prioridad secundaria
+- Eventos recientes
+- Detalles informativos
+- metadata auxiliar
+
+---
+
+## 14. Flujo ideal que debe reflejar la pantalla
+
+La nueva UI debe dejar implícito este flujo de trabajo:
+
+1. El usuario identifica en qué proyecto y sesión está trabajando.
+2. El usuario ve cuánto dura la sesión y qué estado operativo tiene.
+3. El usuario selecciona el monitor y toma capturas desde una misma sección coherente.
+4. El usuario inicia o detiene grabación de audio con estado claro.
+5. El usuario abre y cierra issues con visibilidad del issue activo.
+6. El usuario agrega notas rápidas cuando lo necesita.
+7. El usuario consulta issues ya registrados y eventos recientes como apoyo.
+8. El usuario finaliza la sesión cuando termina.
+
+La pantalla debe “contar” ese flujo por sí sola.
+
+---
+
+## 15. Reglas de layout sugeridas
+
+### 15.1. Layout general
+- Header superior ocupando todo el ancho
+- Debajo, dos columnas:
+  - izquierda más ancha
+  - derecha más angosta
+- Franja inferior para finalizar sesión
+
+### 15.2. Columna izquierda
+Orden sugerido:
+1. Capturas de pantalla
+2. Grabación de audio
+3. Gestión de issue
+
+### 15.3. Columna derecha
+Orden sugerido:
+1. Nota rápida
+2. Issues de la sesión
+3. Eventos recientes
+
+### 15.4. Espaciado
+- Mantener separación homogénea entre secciones
+- Evitar grandes vacíos arriba y acumulación desordenada abajo
+- Usar padding consistente dentro de cada bloque
+
+### 15.5. Proporciones
+- La sección de capturas merece más espacio que las demás
+- El log de eventos no debe crecer al punto de dominar visualmente
+- La nota rápida debe ser compacta
+- El listado de issues y el log deben compartir armónicamente el alto disponible
+
+---
+
+## 16. Reglas visuales concretas
+
+### 16.1. Títulos de secciones
+Cada bloque debe tener título claramente visible:
+- Capturas de pantalla
+- Grabación de audio
+- Gestión de issue
+- Nota rápida
+- Issues de la sesión
+- Eventos recientes
+
+### 16.2. Estados explícitos
+Siempre que exista estado relevante, debe mostrarse con texto.
+No depender solo de color o posición.
+
+### 16.3. Botones
+- La acción principal de cada bloque debe ser claramente identificable.
+- Evitar botones demasiado alejados del contenido que controlan.
+- Mantener consistencia en tamaños y alineación.
+
+### 16.4. Consistencia de márgenes
+- Mismos márgenes externos entre bloques
+- Padding interno consistente dentro de las tarjetas o groupboxes
+- Separación uniforme entre labels, campos y botones
+
+---
+
+## 17. Restricciones importantes
+
+1. No eliminar funcionalidad actual.
+2. No cambiar la lógica de negocio salvo donde sea necesario para mejorar la claridad del estado.
+3. No rediseñar solo cosméticamente; la prioridad es la reorganización estructural.
+4. No dejar acciones operativas críticas separadas de su contexto.
+5. No usar una composición donde el cronómetro quede “flotando” aislado en el centro.
+6. No dejar el botón de captura fuera de la sección de capturas.
+7. No depender exclusivamente de un punto de color para informar el estado de grabación.
+
+---
+
+## 18. Cambios mínimos imprescindibles
+
+Si por tiempo o esfuerzo hubiera que hacer una primera iteración mínima, los cambios obligatorios serían:
+
+1. Reordenar header para mostrar primero Proyecto y luego Sesión.
+2. Integrar el contador de tiempo al header o a una cabecera claramente estructurada.
+3. Unificar selector de monitor + thumbnail + botón "Tomar captura" en una sola sección.
+4. Mejorar la sección de audio mostrando estado textual claro.
+5. Reorganizar la pantalla en dos columnas lógicas:
+   - operación
+   - seguimiento
+6. Reducir el protagonismo excesivo del botón "Finalizar sesión".
+
+---
+
+## 19. Criterio de aceptación funcional y visual
+
+Se considerará que el rediseño cumple con esta especificación si:
+
+1. Un usuario nuevo puede identificar rápidamente:
+   - qué proyecto está abierto;
+   - qué sesión está abierta;
+   - cuánto tiempo lleva;
+   - si se está grabando audio;
+   - si hay un issue activo.
+
+2. La acción de captura se percibe claramente asociada al monitor y al preview.
+
+3. La pantalla se percibe ordenada según el flujo de trabajo real y no como una sumatoria de widgets independientes.
+
+4. La columna derecha se percibe como soporte/seguimiento y no como la zona principal de operación.
+
+5. El botón "Finalizar sesión" sigue siendo visible e importante, pero ya no domina toda la interfaz.
+
+---
+
+## 20. Instrucción final para implementación
+
+Implementar el rediseño respetando la funcionalidad existente y priorizando:
+- claridad de flujo,
+- jerarquía visual,
+- agrupación funcional,
+- proximidad entre estado y acción,
+- equilibrio estético general.
+
+El objetivo no es solo “hacerla más linda”, sino hacerla más intuitiva para una persona que está en plena tarea de revisión y necesita operar casi sin pensar la interfaz.
