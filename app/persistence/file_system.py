@@ -50,14 +50,13 @@ class FileSystemPersistence:
         content = f"""# Sesión de Revisión: {session.title}
 
 - **Proyecto:** {session.project_id}
-- **Tipo de Revisión:** {session.review_type}
 - **Tester:** {session.tester_name}
 - **Inicio:** {session.start_time}
 - **Fin:** {session.end_time}
 - **Estado:** {session.status}
 
 ## Resumen de Evidencia
-- **Audio:** raw/audio/session_audio.wav
+- **Audio:** {summary.get('audio_count', 0)} segmentos (en raw/audio/)
 - **Capturas:** {summary.get('screenshot_count', 0)} (en raw/screenshots/)
 - **Notas:** {summary.get('note_count', 0)} (en raw/notes/quick_notes.ndjson)
 - **Eventos:** events.ndjson

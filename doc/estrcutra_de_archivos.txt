@@ -1,0 +1,37 @@
+Estructura de Archivos - Review Capture Assist
+
+La información de la aplicación se organiza de forma jerárquica y se distribuye entre una base de datos central y carpetas específicas en el sistema de archivos para cada sesión.
+
+1. Persistencia Central (SQLite)
+--------------------------------
+Se utiliza una base de datos SQLite ubicada en:
+C:\Users\maris\.review_capture\app.db
+
+Este archivo centraliza la gestión estructural:
+- Tabla 'projects': Contiene la definición de los proyectos, su código, nombre y ruta raíz de almacenamiento.
+- Tabla 'sessions': Registra cada sesión iniciada, vinculada a un proyecto, con sus metadatos (título, inicio, fin, tester, estado y ruta de carpeta).
+- Tabla 'issues': Registra los issues creados dentro de cada sesión, con su estado y tiempos de vida.
+
+2. Organización en el Sistema de Archivos
+-----------------------------------------
+Cada sesión crea una carpeta única basada en el timestamp y el título (ej: 2026-03-31_143000_rev-000001).
+
+Archivos Generales (Generados por el sistema):
+- session_manifest.json: Contiene metadatos de la sesión y un resumen de evidencias (conteo de capturas, notas, etc.).
+- llm_handoff_manifest.json: Un índice optimizado para que un LLM sepa dónde encontrar cada tipo de información (audio, eventos, imágenes).
+- events.ndjson: El "corazón" de la sesión. Registra cronológicamente cada acción (inicio de sesión, inicio/fin de issue, toma de captura, inicio/fin de audio, notas). Utiliza formato NDJSON (JSON delimitado por líneas) para mayor robustez.
+- README_SESSION.md: Un resumen legible para humanos con la información básica y el estado de la sesión.
+
+Información Creada por el Usuario (Carpeta 'raw/'):
+- raw/audio/: Contiene archivos .wav para cada segmento de grabación iniciado por el usuario. Los nombres incluyen un timestamp y el ID del issue activo.
+- raw/screenshots/: Almacena las capturas de pantalla en formato .png, numeradas secuencialmente.
+- raw/notes/quick_notes.ndjson: Contiene el texto de las notas rápidas ingresadas por el usuario, vinculadas al issue y momento exacto de la sesión.
+
+Otras Carpetas:
+- derived/: Reservada para procesos posteriores (ej: transcripciones, recortes).
+- logs/: Almacena registros técnicos de la ejecución si fuera necesario.
+
+Jerarquía Operativa:
+Un Proyecto puede tener múltiples Sesiones.
+Una Sesión siempre tiene un Issue activo (correlativo: Issue #1, #2, etc.).
+Toda evidencia (audio, captura, nota) se genera dentro de una Sesión y se vincula al Issue que esté activo en ese momento en el archivo events.ndjson.

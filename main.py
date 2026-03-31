@@ -356,6 +356,33 @@ class MainWin(QMainWindow):
             self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Grabación de audio iniciada")
         else:
             self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Grabación de audio detenida")
+        self.sync_issue_ui()
+
+    def sync_issue_ui(self):
+        if not self.session_manager.active_session:
+            return
+            
+        issues = self.db.get_issues_by_session(self.session_manager.active_session.session_id)
+        next_num = len(issues) + 1
+        
+        if self.session_manager.active_issue:
+            self.lbl_active_issue.setText(f"Issue activo: {self.session_manager.active_issue.title}")
+            self.lbl_active_issue.setStyleSheet("font-weight: bold; color: #0d6efd; padding: 5px;")
+            # The NEXT issue will be len(issues) + 1
+            self.btn_start_issue.setText(f"Siguiente Issue (#{next_num})")
+            
+            # Policy: Disable if no content
+            has_content = self.session_manager.active_issue_has_content
+            self.btn_start_issue.setEnabled(has_content)
+            if not has_content:
+                self.btn_start_issue.setToolTip("Agregue contenido (captura, nota o audio) para habilitar")
+            else:
+                self.btn_start_issue.setToolTip("")
+        else:
+            self.lbl_active_issue.setText("Ningún issue activo")
+            self.lbl_active_issue.setStyleSheet("color: #6c757d; padding: 5px;")
+            self.btn_start_issue.setText(f"Iniciar Issue #{next_num}")
+            self.btn_start_issue.setEnabled(True)
 
     def start_session_ui(self, session, project_name):
         self.lbl_project_info.setText(f"Proyecto: {project_name}")
@@ -370,15 +397,7 @@ class MainWin(QMainWindow):
         self.set_audio_button_style(False)
         
         # Issue UI Sync - ALWAYS active issue now
-        issues = self.db.get_issues_by_session(session.session_id)
-        next_num = len(issues) + 1
-        
-        if self.session_manager.active_issue:
-            self.lbl_active_issue.setText(f"Issue activo: {self.session_manager.active_issue.title}")
-            self.lbl_active_issue.setStyleSheet("font-weight: bold; color: #0d6efd; padding: 5px;")
-            self.btn_start_issue.setText(f"Siguiente Issue (#{next_num + 1})")
-            self.btn_start_issue.setEnabled(True)
-        
+        self.sync_issue_ui()
         self.refresh_issue_list()
         self.event_feed.addItem(f"[{datetime.now().strftime('%H:%M:%S')}] Sesión iniciada/reanudada")
 
@@ -403,12 +422,8 @@ class MainWin(QMainWindow):
         final_title = title if title else f"Issue #{next_num}"
         issue = self.session_manager.start_issue(final_title)
         
-        self.lbl_active_issue.setText(f"Issue activo: {final_title}")
-        self.lbl_active_issue.setStyleSheet("font-weight: bold; color: #0d6efd; padding: 5px;")
-        
-        # Update button for NEXT issue
-        self.btn_start_issue.setText(f"Siguiente Issue (#{next_num + 1})")
-        self.btn_start_issue.setEnabled(True)
+        # Sync UI
+        self.sync_issue_ui()
         
         # Sync Audio UI
         if not self.session_manager.audio_recorder.is_recording:
@@ -427,13 +442,7 @@ class MainWin(QMainWindow):
                 return
 
         issue = self.session_manager.stop_issue(auto_start_next=False)
-        self.lbl_active_issue.setText("Fuera de issue")
-        self.lbl_active_issue.setStyleSheet("color: #6c757d; padding: 5px;")
-        
-        issues = self.db.get_issues_by_session(self.session_manager.active_session.session_id)
-        next_num = len(issues) + 1
-        self.btn_start_issue.setText(f"Iniciar Issue #{next_num}")
-        self.btn_start_issue.setEnabled(True)
+        self.sync_issue_ui()
 
         self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue finalizado: {issue.title}")
         
@@ -469,6 +478,7 @@ class MainWin(QMainWindow):
             if confirm == QMessageBox.Yes:
                 self.db.delete_issue(issue.issue_id)
                 self.refresh_issue_list()
+                self.sync_issue_ui()
                 self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Issue eliminado: {issue.title}")
 
     def refresh_issue_list(self):
@@ -482,11 +492,14 @@ class MainWin(QMainWindow):
             self.issue_list.addItem("No hay issues registrados todavía")
         else:
             for iss in issues:
-                status_icon = "▶" if iss.status == "active" else "✓"
+                # Use symbols that don't imply "expandable"
+                status_icon = "●" if iss.status == "active" else "✓"
                 item = QListWidgetItem(f"{status_icon} {iss.title}")
                 if iss.status == "active":
                     item.setFont(QFont("Arial", 10, QFont.Bold))
                     item.setForeground(QColor("#0d6efd"))
+                else:
+                    item.setForeground(QColor("#212529"))
                 self.issue_list.addItem(item)
         
         # Empty state for event feed
@@ -500,6 +513,7 @@ class MainWin(QMainWindow):
         self.session_manager.add_quick_note(text)
         self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Nota agregada")
         self.edit_note.clear()
+        self.sync_issue_ui()
 
     def update_ui_timer(self):
         delta = datetime.now() - self.session_start_time
@@ -622,6 +636,7 @@ class MainWin(QMainWindow):
             mon_idx = self.combo_monitors.currentData()
             shot = self.session_manager.take_manual_screenshot(monitor_index=mon_idx)
             self.event_feed.insertItem(0, f"[{datetime.now().strftime('%H:%M:%S')}] Captura: {shot.file_name}")
+            self.sync_issue_ui()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al capturar: {str(e)}")
 

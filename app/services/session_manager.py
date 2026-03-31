@@ -20,6 +20,7 @@ class SessionManager:
         
         self.active_session: Optional[Session] = None
         self.active_issue: Optional[Issue] = None
+        self.active_issue_has_content: bool = False
         self.session_start_time_unix: float = 0
         self.event_sequence: int = 0
         self.logger = logging.getLogger(__name__)
@@ -44,6 +45,11 @@ class SessionManager:
             payload=payload or {}
         )
         self.fs.save_event(self.active_session.storage_path, event)
+        
+        # Track content
+        if event_type in ["screenshot_taken", "quick_note_added", "audio_started"]:
+            self.active_issue_has_content = True
+            
         return event
 
     def get_next_revision_title(self, project: Project) -> str:
@@ -84,7 +90,7 @@ class SessionManager:
         })
 
         # MANDATORY: Start initial issue automatically
-        self.start_issue("Observaciones iniciales")
+        self.start_issue("Issue #1")
         
         return session
 
@@ -105,8 +111,12 @@ class SessionManager:
         active_issues = [i for i in issues if i.status == "active"]
         if active_issues:
             self.active_issue = active_issues[0]
+            # When resuming, we don't know if the active issue had content in this new segment yet
+            # but usually we want to allow skipping if it already has content in DB.
+            # For simplicity, we assume it's "fresh" for this segments' buttons or we could count.
+            self.active_issue_has_content = True # Assume content if resuming
         else:
-            self.start_issue(f"Continuación de sesión - {datetime.now().strftime('%H:%M')}")
+            self.start_issue(f"Issue #{len(issues) + 1}")
 
         return session
 
@@ -117,7 +127,7 @@ class SessionManager:
 
         # If there's an active issue, stop it first
         if self.active_issue:
-            self.stop_issue()
+            self.stop_issue(auto_start_next=False)
             
         issue = Issue(
             session_id=self.active_session.session_id,
@@ -127,6 +137,7 @@ class SessionManager:
         )
         self.db.save_issue(issue)
         self.active_issue = issue
+        self.active_issue_has_content = False # Reset for new issue
         
         self._log_event("issue_started", {
             "issue_id": issue.issue_id,
@@ -160,7 +171,7 @@ class SessionManager:
             # Get next issue count
             issues = self.db.get_issues_by_session(self.active_session.session_id)
             next_num = len(issues) + 1
-            self.start_issue(f"Issue borrador #{next_num}")
+            self.start_issue(f"Issue #{next_num}")
 
         return stopped_issue
 
@@ -274,13 +285,25 @@ class SessionManager:
         """Generates all necessary JSON and MD manifests for the session."""
         storage_path = self.active_session.storage_path
         
-        # Count evidence
+        # Count screenshots
         screenshot_count = len([f for f in os.listdir(os.path.join(storage_path, "raw", "screenshots")) if f.endswith(".png")])
+        
+        # Count notes from NDJSON
+        note_count = 0
+        notes_file = os.path.join(storage_path, "raw", "notes", "quick_notes.ndjson")
+        if os.path.exists(notes_file):
+            with open(notes_file, "r", encoding="utf-8") as f:
+                note_count = sum(1 for line in f if line.strip())
+
+        # Count audio files
+        audio_files = [f for f in os.listdir(os.path.join(storage_path, "raw", "audio")) if f.endswith(".wav")]
+        audio_count = len(audio_files)
         
         summary = {
             "screenshot_count": screenshot_count,
-            "note_count": 0, # Should be counted from NDJSON for accuracy
-            "audio_duration_s": audio_duration_s
+            "note_count": note_count,
+            "audio_count": audio_count,
+            "audio_duration_s": audio_duration_s # Last segment duration, or we could sum from events
         }
         
         # Manifests

@@ -1,0 +1,8 @@
+1) En el archivo README_SESSION.md parte de la información es incorrecta:
+- En el resumen de evidencia se muestra un path para el audio que es siempre el mismo. No pareciera modificarse según cuantos audios se guarden.
+- La totalización de capturas es correcta
+- La totalización de notas, siempre indica 0. Esto es incorrecto
+
+2) En la carpeta doc, crea una archivo "estrcutra_de_archivos.txt . En él, explica detalladamente como se organiza la información de proyectos, sesiones e issues. Qué papel tiene y que información contiene cada archivo general (no los que se crean por acción del usuario). Explica donde se guarda la información que creo el usuario.
+
+3) Dame tus reflexiones, sin tomar acción, sobre que implicaría persistir los audios en mp3, en lugar de wav
