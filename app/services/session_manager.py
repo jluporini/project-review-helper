@@ -82,6 +82,9 @@ class SessionManager:
             "title": title,
             "project_code": project.code
         })
+
+        # MANDATORY: Start initial issue automatically
+        self.start_issue("Observaciones iniciales")
         
         return session
 
@@ -92,22 +95,29 @@ class SessionManager:
             raise ValueError("Session not found")
         
         self.active_session = session
-        # We approximate session start time to now for new events' relative timestamps, 
-        # but in a real scenario we might want to store the original start and calculate offset.
-        # For simplicity, we restart the relative clock.
         self.session_start_time_unix = time.time()
-        
-        # Count existing events to continue sequence
-        # (This would require reading events.ndjson, for now we just restart sequence)
         self.event_sequence = 0
         
         self._log_event("session_resumed")
+
+        # Check for active issue, if none, start one
+        issues = self.db.get_issues_by_session(session_id)
+        active_issues = [i for i in issues if i.status == "active"]
+        if active_issues:
+            self.active_issue = active_issues[0]
+        else:
+            self.start_issue(f"Continuación de sesión - {datetime.now().strftime('%H:%M')}")
+
         return session
 
     def start_issue(self, title: str):
         """Starts a new issue within the active session."""
         if not self.active_session:
             return
+
+        # If there's an active issue, stop it first
+        if self.active_issue:
+            self.stop_issue()
             
         issue = Issue(
             session_id=self.active_session.session_id,
@@ -124,11 +134,16 @@ class SessionManager:
         })
         return issue
 
-    def stop_issue(self):
-        """Stops the current active issue."""
+    def stop_issue(self, auto_start_next: bool = True):
+        """Stops the current active issue and optionally starts a new one."""
         if not self.active_issue:
             return
             
+        # MANDATORY: Stop audio if recording
+        if self.audio_recorder.is_recording:
+            duration_s = self.audio_recorder.stop_recording()
+            self._log_event("audio_stopped_by_issue_end", {"duration_s": duration_s})
+
         self.active_issue.end_time = datetime.now().isoformat()
         self.active_issue.status = "finished"
         self.db.save_issue(self.active_issue)
@@ -138,9 +153,16 @@ class SessionManager:
             "title": self.active_issue.title
         })
         
-        issue = self.active_issue
+        stopped_issue = self.active_issue
         self.active_issue = None
-        return issue
+
+        if auto_start_next:
+            # Get next issue count
+            issues = self.db.get_issues_by_session(self.active_session.session_id)
+            next_num = len(issues) + 1
+            self.start_issue(f"Issue borrador #{next_num}")
+
+        return stopped_issue
 
     def toggle_audio_recording(self) -> bool:
         """Toggles audio recording. Returns True if now recording, False otherwise."""

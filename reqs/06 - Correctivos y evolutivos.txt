@@ -1,0 +1,88 @@
+Ajustes adicionales para la siguiente iteración:
+
+1) Primera columna: reordenar los bloques de arriba hacia abajo con este orden exacto:
+   a. Issue actual
+   b. Grabación de audio
+   c. Nota rápida
+   d. Capturas de pantalla
+
+2) Nota rápida:
+   - mantener la sección en la primera columna
+   - aumentar claramente la altura de la caja de texto
+   - debe sentirse cómoda para escribir una observación breve o mediana, no solo una línea corta
+   - mantener el botón asociado debajo del campo
+   - conservar estilo consistente con el resto de la columna operativa
+
+3) Grabación de audio:
+   - conservar el título de sección "Grabación de audio"
+   - eliminar el esquema actual de:
+     - indicador de estado por un lado
+     - botón iniciar/detener por otro
+   - reemplazar ambos por un único botón grande, de ancho y protagonismo visual similares al botón "Tomar captura"
+   - este botón debe comunicar simultáneamente:
+     - el estado actual de la grabación
+     - la acción disponible al hacer click
+
+4) Estados del botón de audio:
+   - usar exactamente dos estados visuales y textuales
+
+   Estado A: grabación detenida
+   - texto sugerido:
+     "● Grabación detenida — Presione para comenzar a grabar"
+   - este estado debe verse neutral, disponible, no alarmante
+   - no usar el mismo azul del botón de captura
+   - usar fondo gris claro o gris azulado suave
+   - usar texto oscuro
+   - borde sutil
+   - debe transmitir que no se está grabando, pero que la acción está disponible
+
+   Estado B: grabación en curso
+   - texto sugerido:
+     "■ Grabación en curso — Presione para detener"
+   - este estado debe verse claramente activo
+   - usar fondo rojo sobrio o rojo profundo
+   - usar texto blanco
+   - borde rojo más oscuro
+   - debe transmitir con claridad que la grabación está ocurriendo en este momento
+
+5) Importante sobre simbología:
+   - preferir símbolos coherentes con el estado y la acción disponible
+   - recomendado:
+     - "●" para el estado detenido / disponible para comenzar a grabar
+     - "■" para el estado grabando / disponible para detener
+   - evitar usar un cuadrado de stop en el estado detenido, porque semánticamente resulta menos natural
+
+6) Paleta sugerida para el botón de audio:
+   Estado detenido:
+   - fondo aproximado: #E9EEF5 o #E5E7EB
+   - borde aproximado: #C7D0DB o #CBD5E1
+   - texto aproximado: #1F2937
+
+   Estado grabando:
+   - fondo aproximado: #C0392B o #DC2626
+   - borde aproximado: #991B1B
+   - texto: #FFFFFF
+
+   No es obligatorio respetar exactamente esos hexadecimales, pero sí la lógica visual:
+   - detenido = neutro, sobrio, disponible
+   - grabando = activo, claramente visible, con semántica de recording
+
+7) Consistencia visual:
+   - el botón de audio debe compartir escala, importancia y prolijidad con "Tomar captura"
+   - pero no debe competir cromáticamente con él usando el mismo color
+   - mantener la semántica general:
+     - captura = azul
+     - audio detenido = neutro
+     - audio grabando = rojo
+     - finalizar sesión = destructivo, pero visualmente distinguible del estado "grabando"
+
+8) Objetivo de este cambio:
+   - recuperar espacio vertical
+   - simplificar la lectura de la sección de audio
+   - hacer más directa la interacción
+   - mejorar la claridad visual del estado actual
+   - reforzar el carácter operativo de la primera columna
+
+10) Al iniciar la sesión no hay ningún issue activo. Esto permite que haya notas, capturas y audio fuera de un issue. Asignar uno automáticamente.
+11) Una vez que el usuario inicia un issue, ya se grisa el botón de siguiente issue y no se puede ingresar uno nuevo
+12) El sistema debe asignar un número secuencial a los issues. El nombre o título de issue que se pide al usuario en cada caso, debe ser opcional

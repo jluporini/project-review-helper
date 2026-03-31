@@ -1,0 +1,641 @@
+# Especificación de segunda iteración
+# Aplicación: Review Capture Assist
+# Alcance: refinamiento visual y funcional de la pantalla operativa de sesión
+#          + rediseño de la pantalla de proyectos/sesiones
+# Objetivo: consolidar una UI más coherente, más estética y con un modelo funcional
+#           más consistente respecto de la jerarquía Proyecto > Sesión > Issue.
+
+## 1. Objetivo general
+
+Realizar una segunda iteración de rediseño sobre la aplicación, tomando como base el rediseño ya implementado, con los siguientes objetivos:
+
+1. Refinar la estética general de la pantalla operativa sin alterar su estructura base exitosa.
+2. Corregir ciertos desbalances visuales detectados en la primera iteración.
+3. Reubicar la funcionalidad de notas rápidas para que quede alineada con la lógica operativa del issue actual.
+4. Rediseñar también la pantalla previa de selección/administración de proyectos y sesiones para que ambas vistas compartan un mismo lenguaje visual.
+5. Introducir una lógica funcional más consistente donde la sesión siempre opere dentro de un issue activo.
+6. Definir una política clara para evitar que una grabación de audio atraviese múltiples issues.
+
+---
+
+## 2. Contexto de producto y jerarquía funcional
+
+La jerarquía conceptual de la aplicación es:
+
+1. Proyecto
+2. Sesión
+3. Issue
+
+Toda la UI debe reflejar esta jerarquía visual y funcionalmente.
+
+### Reglas conceptuales
+- El Proyecto es la entidad principal.
+- La Sesión pertenece a un Proyecto.
+- Los Issues pertenecen a una Sesión.
+- Las acciones operativas de revisión (capturas, notas, audio) deben asociarse a un Issue activo.
+
+---
+
+## 3. Pantallas principales de la aplicación
+
+La aplicación debe considerarse formada por dos vistas principales:
+
+### 3.1. Pantalla de selección / administración
+Responsabilidades:
+- listar proyectos
+- permitir seleccionar un proyecto
+- listar sesiones del proyecto seleccionado
+- crear proyecto
+- crear sesión
+- continuar sesión
+
+### 3.2. Pantalla operativa de sesión
+Responsabilidades:
+- mostrar proyecto y sesión activos
+- mostrar duración de sesión
+- tomar capturas de pantalla
+- grabar audio
+- agregar notas
+- gestionar issues
+- consultar issues registrados en la sesión
+- consultar eventos recientes
+- finalizar sesión
+
+Ambas pantallas deben compartir:
+- mismo criterio de jerarquía visual
+- mismo estilo general
+- mismo tratamiento de espaciados
+- mismo lenguaje de botones y títulos
+- consistencia en el uso de color y peso visual
+
+---
+
+## 4. Pantalla operativa de sesión: estado actual de la iteración anterior
+
+La primera iteración fue correcta y debe tomarse como base válida, especialmente en estos puntos:
+
+1. Header con Proyecto a la izquierda, Sesión debajo y duración a la derecha.
+2. Sección de Capturas agrupada con selector, preview y botón.
+3. Sección separada para audio.
+4. Sección separada para gestión de issue.
+5. Columna derecha con información de apoyo.
+6. Botón de finalizar sesión desacoplado del cuerpo principal.
+
+No debe descartarse esta estructura. El objetivo ahora es refinarla.
+
+---
+
+## 5. Cambios requeridos en la pantalla operativa de sesión
+
+## 5.1. Refinamiento visual general
+
+### Objetivo
+Mejorar la estética sin reestructurar drásticamente la pantalla.
+
+### Problemas detectados
+- La pantalla aún se percibe algo rígida y cruda visualmente.
+- Hay exceso de cajas/contornos clásicos visibles.
+- Faltan reglas consistentes de espaciado.
+- La UI mejoró en organización, pero aún puede verse más profesional y menos "framework por defecto".
+
+### Requerimientos
+1. Unificar espaciados internos y externos entre bloques.
+2. Reducir el ruido visual producido por demasiados bordes.
+3. Mejorar la consistencia tipográfica entre:
+   - título principal
+   - subtítulo de sesión
+   - títulos de secciones
+   - estados
+   - textos secundarios
+4. Mantener una apariencia sobria, profesional y clara.
+5. No sobrecargar con colores ni efectos innecesarios.
+
+### Criterios visuales deseados
+- interfaz limpia
+- jerarquía clara
+- mejor respiración entre secciones
+- menos sensación de paneles apilados sin criterio visual fino
+- composición más equilibrada
+
+---
+
+## 5.2. Header superior
+
+### Mantener
+- Proyecto como información principal
+- Sesión como información secundaria
+- Duración a la derecha
+
+### Ajustes requeridos
+1. El timer debe seguir siendo claramente visible, pero con menos agresividad visual.
+2. Reducir un poco su tamaño, peso o saturación para que no compita en exceso con el nombre del proyecto.
+3. El header debe sentirse integrado como un bloque superior de contexto, no solo como un contenedor con texto grande.
+
+### Reglas
+- Proyecto debe seguir siendo el dato jerárquico principal.
+- Sesión debe verse subordinada a Proyecto.
+- Duración debe seguir siendo importante, pero no dominante.
+
+---
+
+## 5.3. Sección de Capturas
+
+### Mantener
+- selector de monitor
+- preview del monitor
+- botón "Tomar captura"
+todo dentro de una sola sección
+
+### Ajustes requeridos
+1. Mantener esta sección como la acción operativa más clara de la pantalla.
+2. El botón "Tomar captura" debe seguir siendo prominente, pero no excesivamente dominante.
+3. Ajustar tamaño, altura o saturación si hace falta para integrarlo mejor al resto del sistema visual.
+4. Mejorar composición interna para que:
+   - selector
+   - preview
+   - botón
+   se lean como una secuencia clara y armoniosa.
+
+### Reglas
+- No separar nuevamente el botón del preview.
+- No reducir tanto el preview como para que deje de ser útil.
+- Mantener la comprensión inmediata del flujo:
+  seleccionar monitor -> ver preview -> tomar captura
+
+---
+
+## 5.4. Sección de Audio
+
+### Problema detectado
+La sección está mejor organizada que antes, pero visualmente aún queda demasiado vacía o poco articulada.
+
+### Requerimientos
+1. Mantener una sección exclusiva para audio.
+2. Mostrar con claridad:
+   - estado de grabación
+   - acción principal disponible
+3. Mejorar la composición visual interna para que no parezca un bloque con mucho espacio en blanco y poca estructura.
+4. Estado textual obligatorio:
+   - Grabando
+   - Detenido
+
+### Recomendación
+Organizar esta sección como:
+- título
+- estado visible con indicador
+- botón de iniciar/detener
+- eventualmente texto secundario si existe duración o referencia del audio actual
+
+### Regla de UX
+No depender solo de color para representar el estado.
+
+---
+
+## 5.5. Sección de Notas
+
+### Cambio importante
+Mover "Nota rápida" desde la columna derecha a la columna operativa izquierda.
+
+### Motivo
+Las notas forman parte de la producción de contenido del issue actual, al igual que:
+- capturas
+- audio
+- gestión del issue
+
+Por lo tanto, funcional y conceptualmente deben pertenecer a la zona operativa.
+
+### Nueva ubicación
+La sección de notas debe incorporarse a la primera columna.
+
+### Orden sugerido dentro de la columna izquierda
+1. Capturas de pantalla
+2. Grabación de audio
+3. Nota rápida
+4. Gestión de issue
+
+o alternativamente:
+1. Capturas de pantalla
+2. Nota rápida
+3. Grabación de audio
+4. Gestión de issue
+
+Elegir la variante que resulte visualmente más equilibrada, pero la nota debe quedar en la columna operativa.
+
+### Requerimientos de la sección
+- campo de texto multilinea
+- botón para agregar nota
+- estilo consistente con el resto de las secciones operativas
+
+### Regla funcional
+Toda nota creada debe quedar asociada al issue activo al momento de creación.
+
+---
+
+## 5.6. Sección de Gestión de Issue
+
+### Mantener
+- visualización del issue activo
+- botón para nuevo issue
+- botón para finalizar issue
+
+### Ajustes requeridos
+1. Mejorar la composición interna de la sección.
+2. Darle mejor anclaje visual al texto del issue activo.
+3. Revisar el balance visual entre botón habilitado y botón deshabilitado.
+4. Hacer que el bloque se perciba claramente como el contexto operativo actual.
+
+### Regla funcional clave
+La sesión debe tener siempre un issue activo.
+
+Esto modifica la lógica de la sección y debe reflejarse en la UI.
+
+---
+
+## 5.7. Columna derecha: redefinición de contenido
+
+La columna derecha debe quedar exclusivamente como zona de consulta, contexto y seguimiento.
+
+### Debe contener
+1. Issues registrados en esta sesión
+2. Eventos recientes
+
+### Ya no debe contener
+- Nota rápida
+
+### Reglas
+- La columna derecha no debe sentirse como zona de producción de contenido.
+- Debe tener menor prioridad visual que la columna izquierda.
+- Debe funcionar como apoyo de consulta.
+
+---
+
+## 5.8. Sección de Issues registrados en esta sesión
+
+### Mantener
+- listado de issues de la sesión
+
+### Mejoras requeridas
+1. Resaltar visualmente el issue activo actual.
+2. Distinguir con claridad issues activos y finalizados.
+3. Mejorar la legibilidad de la lista.
+4. Si no hay historial aún, mostrar estado vacío explícito.
+
+### Estados vacíos recomendados
+- "No hay issues registrados todavía"
+o equivalente similar
+
+---
+
+## 5.9. Sección de Eventos recientes
+
+### Mantener
+- listado cronológico
+- scroll
+
+### Mejoras requeridas
+1. Mantener esta sección como secundaria respecto de la operación principal.
+2. Hacerla más legible.
+3. Si no hay eventos, mostrar estado vacío explícito.
+
+### Estado vacío recomendado
+- "No hay eventos registrados todavía"
+o equivalente similar
+
+### Reglas de contenido
+Cada evento debería reflejar claramente:
+- timestamp
+- tipo de acción
+- descripción breve
+
+---
+
+## 5.10. Botón "Finalizar sesión"
+
+### Mantener
+- acción separada del resto
+- diferenciación visual
+
+### Ajustes requeridos
+1. Integrarlo mejor visualmente al conjunto inferior.
+2. Mantenerlo importante sin volverlo dominante.
+3. Debe seguir viéndose como acción de cierre.
+
+---
+
+## 6. Rediseño de la pantalla de proyectos/sesiones
+
+## 6.1. Objetivo general
+
+Rediseñar la pantalla previa de selección y administración de proyectos/sesiones para alinearla visualmente con la pantalla operativa.
+
+La pantalla actual es funcional, pero se percibe demasiado básica respecto del nuevo diseño de la vista operativa.
+
+---
+
+## 6.2. Flujo que la pantalla debe comunicar
+
+La pantalla debe hacer evidente esta secuencia:
+
+1. seleccionar proyecto
+2. visualizar sesiones del proyecto seleccionado
+3. ejecutar una acción:
+   - crear nuevo proyecto
+   - crear nueva sesión
+   - continuar sesión existente
+
+La UI debe contar esa historia sin esfuerzo cognitivo extra.
+
+---
+
+## 6.3. Estructura recomendada
+
+### Header superior
+Debe tener un encabezado claro para la pantalla.
+
+Ejemplo:
+- Proyectos de revisión
+
+### Cuerpo principal
+Dos bloques apilados o claramente relacionados:
+
+#### Bloque 1: Proyectos
+- lista de proyectos
+- debe percibirse como entidad principal
+
+#### Bloque 2: Sesiones del proyecto seleccionado
+- lista de sesiones del proyecto activo
+- subordinada visualmente al bloque de proyectos
+
+### Footer de acciones
+Botones para:
+- Nuevo proyecto
+- Nueva sesión
+- Continuar sesión
+
+---
+
+## 6.4. Reglas de jerarquía visual
+
+1. El listado de proyectos debe verse como nivel principal.
+2. El listado de sesiones debe verse subordinado al proyecto seleccionado.
+3. La dependencia entre ambas listas debe ser evidente.
+
+### Requisito importante
+Cambiar el título o subtítulo del bloque de sesiones para que enfatice pertenencia al proyecto seleccionado.
+
+Ejemplos válidos:
+- Sesiones del proyecto seleccionado
+- Sesiones de este proyecto
+
+Evitar un título demasiado ambiguo o genérico si no expresa bien la relación.
+
+---
+
+## 6.5. Estados vacíos
+
+Esta pantalla necesita mejores empty states.
+
+### Para sesiones sin proyecto seleccionado
+Mostrar algo como:
+- "Seleccione un proyecto para ver sus sesiones"
+
+### Para proyecto sin sesiones
+Mostrar algo como:
+- "Este proyecto aún no tiene sesiones"
+- "Use 'Nueva sesión' para comenzar una revisión"
+
+### Regla
+No dejar grandes áreas vacías sin mensaje explicativo.
+
+---
+
+## 6.6. Acciones inferiores
+
+### Mantener
+- Nuevo proyecto
+- Nueva sesión
+- Continuar sesión
+
+### Ajustes requeridos
+1. Unificar visualmente el estilo de botones con la pantalla operativa.
+2. Mantener estados habilitado/deshabilitado claros.
+3. Hacer evidente la dependencia lógica:
+   - Nueva sesión requiere proyecto seleccionado
+   - Continuar sesión requiere sesión seleccionada
+
+### Recomendación
+Mantener las acciones en el área inferior, pero mejor alineadas con el nuevo lenguaje visual general.
+
+---
+
+## 7. Nueva política funcional sobre issues
+
+## 7.1. Regla general obligatoria
+
+Toda sesión debe tener siempre un issue activo.
+
+No debe existir trabajo "fuera de issue" desde el punto de vista del modelo de datos y de la lógica de operación.
+
+### Motivo
+Esto mejora:
+- trazabilidad
+- consistencia de datos
+- asociación de evidencias
+- futura consulta o procesamiento
+- claridad conceptual de la sesión
+
+---
+
+## 7.2. Creación automática del primer issue
+
+Al iniciar una sesión, se debe crear automáticamente un issue inicial por defecto.
+
+### Nombre sugerido
+Puede ser alguno de estos:
+- Observaciones generales
+- Issue sin clasificar #1
+- Issue borrador #1
+
+El nombre exacto puede definirse según criterio del producto, pero debe existir un contenedor inicial automático.
+
+### Resultado esperado
+Desde el segundo cero de la sesión:
+- capturas
+- notas
+- audios
+- eventos
+quedan asociados a un issue activo.
+
+---
+
+## 7.3. Asociación de acciones al issue activo
+
+### Reglas
+1. Toda captura debe asociarse al issue activo en el instante de captura.
+2. Toda nota debe asociarse al issue activo en el instante de creación.
+3. Todo audio debe asociarse a un único issue activo.
+
+---
+
+## 7.4. Política para audio
+
+### Regla obligatoria
+Una grabación de audio no debe atravesar múltiples issues.
+
+### Motivo
+El audio es una entidad temporal continua, y permitir que cruce issues genera ambigüedad de trazabilidad y complica el análisis posterior.
+
+### Regla de implementación
+Cada clip de audio debe quedar contenido dentro de un único issue.
+
+---
+
+## 7.5. Comportamiento al cerrar un issue con audio activo
+
+### Regla obligatoria
+No se debe permitir que un issue se cierre manteniendo una grabación abierta que continúe hacia otro issue.
+
+### Comportamiento requerido
+Si el usuario intenta finalizar el issue actual mientras hay una grabación activa, el sistema debe resolver esa situación antes de cerrar el issue.
+
+### Alternativas válidas de implementación
+1. detener automáticamente la grabación y luego cerrar el issue
+2. mostrar confirmación:
+   - informar que la grabación se detendrá y guardará
+   - si el usuario confirma, detener audio y continuar con el cierre
+
+Se puede elegir una de las dos variantes, pero la grabación no puede continuar hacia el siguiente issue.
+
+### Recomendación preferida
+Mostrar confirmación, por seguridad y claridad.
+
+---
+
+## 7.6. Comportamiento posterior al cierre de un issue
+
+### Regla general
+Al cerrar un issue, debe crearse automáticamente un nuevo issue borrador o genérico para mantener continuidad operativa.
+
+### Motivo
+La sesión nunca debe quedar sin issue activo.
+
+### Resultado esperado
+Después de cerrar un issue:
+- el issue anterior queda finalizado
+- se crea inmediatamente un nuevo issue automático
+- ese nuevo issue queda activo
+
+### Nombre sugerido
+- Observaciones generales
+- Issue sin clasificar #N
+- Issue borrador #N
+
+---
+
+## 7.7. Implicancias en la UI
+
+La pantalla operativa debe asumir siempre que existe un issue activo.
+
+### Consecuencias visuales
+1. Siempre debe mostrarse un issue activo.
+2. La captura, nota y grabación deben entenderse como acciones dentro de ese issue.
+3. No se necesita un estado "sin issue activo" como caso habitual de operación.
+4. Si existe una transición entre issues, debe resolverse sin dejar huecos operativos.
+
+---
+
+## 8. Reglas de consistencia visual entre pantallas
+
+Ambas pantallas deben compartir:
+
+1. mismo sistema de espaciados
+2. mismo lenguaje de botones
+3. mismo estilo de títulos
+4. misma idea de jerarquía visual
+5. misma sobriedad cromática
+6. mismos criterios para estados vacíos
+7. misma coherencia general de producto
+
+No deben sentirse como aplicaciones distintas o pantallas hechas en momentos completamente desconectados.
+
+---
+
+## 9. Reglas de color y estilo
+
+### Objetivo
+Usar el color con intención y de manera consistente.
+
+### Recomendaciones
+1. Reservar color destacado para:
+   - acción principal
+   - estados importantes
+   - énfasis visual controlado
+2. No saturar múltiples elementos importantes con colores fuertes simultáneamente.
+3. Mantener una estética sobria y profesional.
+4. Mantener el botón de finalizar sesión como acción diferenciada, pero sin exceso.
+5. Si se usa color para estado, acompañarlo siempre con texto.
+
+---
+
+## 10. Reglas de espaciado y densidad visual
+
+### Requerimientos
+1. Homogeneizar márgenes entre bloques.
+2. Homogeneizar padding interno.
+3. Evitar espacios muertos excesivos.
+4. Evitar bloques demasiado vacíos visualmente.
+5. Lograr una densidad visual equilibrada:
+   - ni sobrecargada
+   - ni excesivamente vacía
+
+---
+
+## 11. Restricciones
+
+1. No romper la funcionalidad que ya quedó correctamente resuelta en la primera iteración.
+2. No volver a separar acciones de su contexto funcional.
+3. No reintroducir una disposición donde las notas se perciban como elemento meramente secundario si forman parte del issue actual.
+4. No permitir operaciones de revisión sin issue activo.
+5. No permitir que una grabación de audio atraviese más de un issue.
+6. No dejar la pantalla de proyectos/sesiones visualmente desalineada respecto de la pantalla operativa.
+
+---
+
+## 12. Criterios de aceptación
+
+La implementación se considerará correcta si cumple simultáneamente con lo siguiente:
+
+### Pantalla operativa
+1. Se mantiene el buen layout general logrado en la iteración anterior.
+2. La pantalla se ve más refinada, menos rígida y más consistente.
+3. La nota queda en la columna operativa izquierda.
+4. El issue activo se percibe claramente como contexto obligatorio de trabajo.
+5. La columna derecha queda como espacio de consulta e histórico.
+6. El timer y el botón de captura están mejor balanceados visualmente.
+7. La sección de audio se ve mejor compuesta.
+
+### Pantalla de proyectos/sesiones
+8. Se entiende con claridad la secuencia proyecto -> sesiones -> acción.
+9. La jerarquía proyecto/sesión queda mejor expresada visualmente.
+10. Los estados vacíos son informativos y no meros espacios en blanco.
+11. La pantalla comparte lenguaje visual con la vista operativa.
+
+### Lógica funcional
+12. Siempre existe un issue activo.
+13. Toda captura, nota y audio quedan asociados a un issue.
+14. El audio nunca atraviesa más de un issue.
+15. Cerrar un issue resuelve previamente cualquier grabación activa.
+16. Al cerrar un issue se crea automáticamente uno nuevo para mantener continuidad.
+
+---
+
+## 13. Instrucción final
+
+Implementar esta segunda iteración tomando como base el rediseño ya realizado, evitando una reescritura innecesaria de la pantalla operativa, pero introduciendo:
+
+- refinamiento visual,
+- coherencia estética entre pantallas,
+- reubicación de notas a la zona operativa,
+- y una lógica funcional estricta en torno al issue activo y al audio contenido dentro de un único issue.
+
+El objetivo no es solo mejorar la apariencia, sino consolidar una herramienta más coherente, trazable, intuitiva y lista para crecer sin inconsistencias estructurales.

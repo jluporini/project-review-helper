@@ -1,0 +1,7 @@
+1) No hay un buen motivo para que el primer issue que se abre automáticamente se llame "Observaciones iniciales". Mantener la nomenclatura del resto de los issues.
+2) Si no hay ningún contenido en el issue presente, deshabilitar el control "Siguiente Issue"
+3) Estoy en una sesión nueva, veo que el Issue activo se llama "Observaciones principales", y el texto que se encuentra en el botón de "Siguiente issue" tiene indicado un "#3". Por qué ocurre esto ? No debería ser el "#2" ? Sin embargo, cuando hago click en el botón, se abre el modal para ingresar el título, y este dice #2.
+4) Una vez que confirmo el nombre de issue (vacío en este caso), en la sección de Issues registrados veo:
+- Primera fila, ícono de checkmark, y luego observaciones iniciales (en negro)
+- Segunda fila, icono de flecha hacia la derecha, y luego "Issue borrador #2" (en azul). No entiendo la lógica. la flecha da la idea de que se pudiera expandir el issue, cosa que no se puede hacer (tampoco tendría sentido). Además, no entiendo por qué está en azul, no de donde salió la palabra "borrador"
+- Tercera fila, icono de flecha hacia la derecha, y luego "Issue #2" (en azul). Por favor, revisa está lógica, no parece tener sentido.
