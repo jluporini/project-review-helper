@@ -1,0 +1,575 @@
+# Especificación técnica - MVP de procesamiento y exportación por Issue
+# Aplicación: Review Capture Assist
+# Objetivo: implementar una funcionalidad mínima que permita seleccionar un issue,
+# transcribir localmente sus audios y generar una estructura cronológica integrada
+# con notas y capturas, exportada a JSON y Markdown.
+# Alcance: primera versión mínima, enfocada en un solo issue por vez.
+
+## 1. Objetivo funcional
+
+Agregar una nueva funcionalidad independiente dentro de la aplicación que permita:
+
+1. seleccionar un Proyecto
+2. seleccionar una Sesión de ese Proyecto
+3. visualizar los Issues de esa Sesión
+4. seleccionar un solo Issue
+5. elegir un directorio de salida
+6. procesar ese Issue
+7. transcribir localmente los audios asociados al Issue
+8. integrar cronológicamente:
+   - segmentos de transcripción
+   - notas rápidas
+   - capturas de pantalla
+9. exportar el resultado a:
+   - JSON canónico
+   - Markdown legible
+
+El objetivo de esta primera versión es validar:
+- la calidad y viabilidad de la transcripción local
+- la calidad de la integración temporal
+- la utilidad del formato exportado como base para futuros exportadores
+
+---
+
+## 2. Alcance de esta primera iteración
+
+### Incluido
+- pantalla simple de selección Proyecto -> Sesión -> Issue
+- procesamiento de un solo issue por vez
+- transcripción local de audios
+- construcción de timeline unificada
+- exportación a JSON
+- exportación a Markdown
+- elección manual del directorio de salida
+- copia/exportación de referencias visuales a una carpeta `img/` dentro del directorio de salida
+
+### No incluido por ahora
+- selección múltiple de issues
+- procesamiento de sesión completa
+- procesamiento de proyecto completo
+- exportación a XML
+- exportación a HTML
+- corte físico de audios
+- forced alignment
+- diarización
+- agrupación semántica avanzada
+- edición manual del resultado exportado
+
+---
+
+## 3. Nueva pantalla / vista mínima
+
+Implementar una vista simple y funcional para disparar el proceso.
+
+### Componentes mínimos requeridos
+1. selector de Proyecto
+2. selector de Sesión
+3. lista de Issues de la sesión seleccionada
+4. selector de directorio de salida
+5. botón "Procesar Issue"
+6. área de estado o log simple para mostrar avance / errores / resultado
+
+### Flujo esperado
+1. el usuario selecciona un proyecto
+2. el sistema carga las sesiones del proyecto
+3. el usuario selecciona una sesión
+4. el sistema carga los issues de la sesión
+5. el usuario selecciona un issue
+6. el usuario elige el directorio de salida
+7. el usuario ejecuta "Procesar Issue"
+8. el sistema genera los archivos de salida
+
+### Restricción inicial
+- permitir seleccionar un solo issue por vez en esta versión
+
+---
+
+## 4. Fuente de datos
+
+La reconstrucción del issue debe apoyarse en las fuentes existentes de verdad:
+
+### 4.1. SQLite
+Usar la base SQLite para resolver:
+- proyecto
+- sesión
+- issue
+- relaciones entre ellos
+- estado y metadatos básicos
+
+### 4.2. Carpeta de sesión
+Usar la carpeta de sesión para resolver:
+- events.ndjson
+- raw/notes/quick_notes.ndjson
+- raw/audio/
+- raw/screenshots/
+- session_manifest.json
+- llm_handoff_manifest.json si aporta ayuda
+- otros archivos derivados si en el futuro existen
+
+### Regla
+No depender exclusivamente de nombres de archivos para reconstruir relaciones.
+El nombre del archivo puede ayudar, pero la fuente de verdad principal debe ser:
+- SQLite
+- events.ndjson
+- manifests
+- metadatos estructurados
+
+---
+
+## 5. Librería de transcripción local
+
+### Recomendación principal
+Usar `faster-whisper` como motor inicial de transcripción local.
+
+### Objetivo
+Obtener para cada archivo de audio:
+- texto completo
+- segmentos con `start`, `end` y `text`
+
+### Resultado esperado por audio
+1. transcripción completa
+2. segmentos temporales
+3. timestamps relativos al inicio del audio
+4. posterior conversión a timestamps absolutos de sesión
+
+### Nota
+En esta primera iteración no se requiere precisión a nivel palabra.
+Con segmentos relativamente cortos es suficiente para validar el enfoque.
+
+---
+
+## 6. Identificación de evidencia asociada al issue
+
+Para el issue seleccionado, el sistema debe reconstruir toda la evidencia vinculada.
+
+### 6.1. Notas
+Recuperar todas las notas del issue, incluyendo:
+- identificador si existe
+- timestamp absoluto
+- texto
+- issue_id asociado
+
+### 6.2. Capturas
+Recuperar todas las capturas del issue, incluyendo:
+- identificador si existe
+- timestamp absoluto
+- path original
+- issue_id asociado
+
+### 6.3. Audios
+Recuperar todos los segmentos de audio del issue, incluyendo:
+- identificador si existe
+- timestamp de inicio
+- timestamp de fin
+- duración si puede calcularse
+- path original
+- issue_id asociado
+
+### Regla funcional
+Solo incluir evidencia asociada al issue seleccionado.
+
+---
+
+## 7. Conversión temporal
+
+## 7.1. Timestamps absolutos
+Toda la integración debe basarse en timestamps absolutos dentro de la sesión.
+
+### Para notas y capturas
+Ya son eventos puntuales con timestamp absoluto.
+
+### Para audios
+Cada archivo de audio debe tener:
+- `audio_started_at`
+- `audio_ended_at`
+
+### Para segmentos de transcripción
+Cada segmento debe incluir:
+- `offset_start_sec`
+- `offset_end_sec`
+- `absolute_start_ts`
+- `absolute_end_ts`
+
+### Fórmula
+- `absolute_start_ts = audio_started_at + offset_start_sec`
+- `absolute_end_ts = audio_started_at + offset_end_sec`
+
+---
+
+## 8. Integración cronológica
+
+## 8.1. Estrategia
+No cortar físicamente el audio.
+No resegmentar el audio usando notas o capturas.
+
+### En cambio
+Construir una timeline unificada ordenada cronológicamente que mezcle:
+- segmentos de transcripción
+- notas
+- capturas
+- opcionalmente eventos estructurales relevantes del issue
+
+### Ordenación
+Ordenar por timestamp absoluto.
+
+---
+
+## 8.2. Tipos de items permitidos en la timeline
+La timeline unificada debe contener ítems de tipos como:
+
+- `transcript_segment`
+- `note`
+- `screenshot`
+
+Opcionalmente más adelante:
+- `audio_start`
+- `audio_end`
+- `issue_start`
+- `issue_end`
+
+Para esta primera versión no es obligatorio incluir esos tipos extra si complican innecesariamente.
+
+---
+
+## 8.3. Heurística temporal inicial
+No usar una lógica compleja de segmentación.
+
+### Heurística mínima aceptable
+- insertar cada nota en la timeline según su timestamp
+- insertar cada screenshot en la timeline según su timestamp
+- insertar cada segmento de transcript según `absolute_start_ts`
+
+### Opcional
+Agregar metadata de cercanía temporal, por ejemplo:
+- `near_previous_transcript_segment`
+- `near_next_transcript_segment`
+
+si está a menos de 1 o 2 segundos de distancia
+
+### Aclaración
+Esta metadata es opcional.
+No debe bloquear la implementación mínima.
+
+---
+
+## 9. Formato de salida canónico
+
+El formato principal debe ser JSON.
+
+### Nombre sugerido del archivo
+El nombre del archivo exportado debe permitir reusar el mismo directorio de salida para múltiples exportaciones sin colisiones.
+
+### Regla de naming
+El nombre debe incluir información suficiente para ser único y reconocible.
+
+### Recomendación de naming para bundle principal
+Usar un patrón como:
+
+- `project_<project_code>__session_<session_title>__issue_<issue_id>.json`
+
+o una variante equivalente sanitizada para filesystem
+
+Por ejemplo:
+- `project_prueba3__session_rev-000006__issue_25.json`
+
+### Recomendación de naming para Markdown
+- `project_<project_code>__session_<session_title>__issue_<issue_id>.md`
+
+### Regla
+Sanitizar:
+- espacios
+- caracteres especiales
+- separadores conflictivos
+
+para que el nombre sea seguro en filesystem.
+
+---
+
+## 10. Estructura mínima del JSON
+
+El JSON debe ser suficientemente rico para futuras exportaciones.
+
+### Campos sugeridos
+
+```text
+schema_version
+generated_at
+source
+project
+session
+issue
+assets
+timeline'''
+
+Estructura conceptual
+
+{
+  "schema_version": "0.1",
+  "generated_at": "...",
+  "source": {
+    "app": "Review Capture Assist",
+    "scope": "single_issue_export"
+  },
+  "project": { ... },
+  "session": { ... },
+  "issue": { ... },
+  "assets": {
+    "notes": [ ... ],
+    "screenshots": [ ... ],
+    "audio": [ ... ]
+  },
+  "timeline": [ ... ]
+}
+
+11. Estructura esperada de assets
+11.1. Notes
+
+Cada nota debe incluir al menos:
+
+id si existe
+ts
+text
+11.2. Screenshots
+
+Cada captura debe incluir al menos:
+
+id si existe
+ts
+original_path
+exported_path relativo si fue copiada al directorio de salida
+11.3. Audio
+
+Cada audio debe incluir al menos:
+
+id si existe
+started_at
+ended_at
+original_path
+transcript
+Transcript
+
+Debe incluir:
+
+full_text
+segments[]
+Cada segmento
+
+Debe incluir:
+
+offset_start_sec
+offset_end_sec
+absolute_start_ts
+absolute_end_ts
+text
+12. Timeline unificada
+
+Cada elemento de timeline debe incluir al menos:
+
+Para transcript_segment
+type = "transcript_segment"
+ts
+audio_id
+offset_start_sec
+offset_end_sec
+text
+Para note
+type = "note"
+ts
+note_id
+text
+Para screenshot
+type = "screenshot"
+ts
+screenshot_id
+original_path
+exported_path relativo si aplica
+Regla
+
+La timeline debe quedar lista para:
+
+inspección humana
+exportadores futuros
+consumo por LLM
+13. Exportación a Markdown
+
+Además del JSON, generar un Markdown legible.
+
+Naming
+
+Usar el mismo criterio de unicidad del JSON.
+
+Contenido mínimo
+encabezado con Proyecto / Sesión / Issue
+breve metadata
+timeline cronológica legible
+sección opcional de transcripción completa por audio
+sección de notas
+sección de capturas
+Objetivo
+
+El Markdown debe servir tanto para:
+
+lectura humana
+validación manual rápida
+posible uso futuro con LLM
+14. Directorio de salida elegido por el usuario
+14.1. Requisito
+
+El usuario debe poder elegir manualmente el directorio de salida.
+
+Componente de UI
+campo o label con ruta elegida
+botón "Examinar..." o equivalente
+selector de carpeta
+Validación
+no permitir procesar si no hay directorio de salida definido
+mostrar error claro si la ruta es inválida o no escribible
+14.2. Subcarpeta img
+
+Dentro del directorio de salida, crear una subcarpeta img/ si no existe.
+
+Objetivo
+
+Alojar allí las imágenes exportadas / copiadas asociadas a los screenshots.
+
+Regla
+si img/ no existe, crearla
+si existe, reutilizarla
+14.3. Evitar colisiones de nombres
+
+El directorio de salida debe poder reutilizarse para exportaciones de múltiples issues sin colisiones.
+
+Regla general
+
+Todos los nombres exportados deben incluir información suficiente para distinguir:
+
+proyecto
+sesión
+issue
+entidad específica si corresponde
+Para imágenes exportadas
+
+Usar nombres únicos y estables, por ejemplo:
+
+project_<project_code>__session_<session_title>__issue_<issue_id>__shot_<n>.png
+
+o una variante equivalente.
+
+Ejemplo
+project_prueba3__session_rev-000006__issue_25__shot_001.png
+Regla
+
+No sobrescribir archivos de otros issues exportados previamente al mismo directorio.
+
+15. Política respecto de imágenes
+Recomendación para esta versión
+
+Copiar las imágenes asociadas al issue al directorio de salida, dentro de img/.
+
+Motivo
+
+Esto facilita:
+
+portabilidad del export
+futura generación de HTML
+inspección del resultado sin depender del árbol original de sesión
+En el JSON y Markdown
+
+Guardar:
+
+original_path
+exported_path relativo al directorio de salida
+16. Manejo de errores
+Casos mínimos a contemplar
+issue sin audios
+issue sin notas
+issue sin capturas
+audio inexistente en disco
+error de transcripción
+error al crear directorio de salida
+error al copiar imágenes
+error al escribir JSON o Markdown
+Regla
+
+El sistema debe ser tolerante cuando falten ciertos tipos de evidencia.
+
+Ejemplos
+si no hay audio, igual exportar notes + screenshots
+si no hay screenshots, igual exportar transcript + notes
+si falla un audio, registrar el error claramente y continuar si es razonable
+17. Logging / feedback al usuario
+
+La pantalla debe mostrar un feedback mínimo del proceso:
+
+Ejemplos
+"Resolviendo issue..."
+"Leyendo evidencias..."
+"Transcribiendo audio 1/2..."
+"Construyendo timeline..."
+"Copiando imágenes..."
+"Escribiendo JSON..."
+"Escribiendo Markdown..."
+"Proceso finalizado"
+Si hay error
+
+Mostrar mensaje claro y accionable.
+
+18. Organización sugerida de archivos de salida
+
+El directorio elegido por el usuario contendrá:
+
+el archivo JSON exportado
+el archivo Markdown exportado
+la carpeta img/ con capturas copiadas
+Ejemplo conceptual
+<output_dir>/
+  project_prueba3__session_rev-000006__issue_25.json
+  project_prueba3__session_rev-000006__issue_25.md
+  img/
+    project_prueba3__session_rev-000006__issue_25__shot_001.png
+    project_prueba3__session_rev-000006__issue_25__shot_002.png
+Regla
+
+Esta estructura debe poder convivir con exportaciones de otros issues al mismo directorio sin colisiones.
+
+19. Restricciones de esta primera versión
+procesar un solo issue por vez
+usar JSON como formato canónico principal
+generar Markdown como salida adicional
+no implementar XML ni HTML todavía
+no cortar archivos de audio
+no resegmentar audio según notas o screenshots
+no hacer forced alignment
+no depender de nombres de archivos como única fuente de verdad
+no sobrescribir exportaciones previas del mismo directorio por colisión de nombres
+20. Criterios de aceptación
+
+Se considerará correcta esta implementación si:
+
+el usuario puede seleccionar Proyecto, Sesión, Issue y directorio de salida
+el sistema puede procesar un issue con uno o más audios
+la transcripción ocurre localmente
+los segmentos del transcript quedan convertidos a timestamps absolutos
+notas, capturas y transcript quedan integrados cronológicamente en una timeline común
+se genera un JSON canónico útil y legible
+se genera un Markdown legible
+se crea img/ dentro del directorio de salida si no existe
+las imágenes exportadas usan nombres sin colisiones
+el mismo directorio de salida puede reutilizarse para múltiples exports de distintos issues
+el sistema tolera ausencia de alguno de los tipos de evidencia
+21. Instrucción final de implementación
+
+Implementar esta funcionalidad como un MVP claramente desacoplado y simple, priorizando:
+
+validación rápida del enfoque
+buena trazabilidad temporal
+output estable y reusable
+facilidad de inspección manual
+robustez suficiente para seguir iterando
+
+La prioridad real de esta versión no es la sofisticación de exportación, sino comprobar que:
+
+la transcripción local funciona razonablemente bien
+la integración temporal con notas y capturas es útil
+el JSON resultante sirve como base canónica para futuros exportadores.
+
